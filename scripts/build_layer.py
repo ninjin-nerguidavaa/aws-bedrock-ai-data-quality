@@ -56,9 +56,9 @@ def run_command(command, cwd=None):
             print(f"Error: {e.stderr}")
         sys.exit(1)
 
-def install_dependencies(requirements, target_dir):
-    """Install Python dependencies into the target directory."""
-    print(f"\nInstalling dependencies from {requirements}")
+def install_dependencies(requirements_file, target_dir):
+    """Install Python dependencies with optimization for Lambda."""
+    print(f"\nInstalling dependencies from {requirements_file}")
     
     # Create target directory if it doesn't exist
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -66,9 +66,22 @@ def install_dependencies(requirements, target_dir):
     # Use the full path to pip3
     pip_path = "/usr/bin/pip3"
     
-    # Install with optimization flags for Lambda
-    cmd = (
-        f"{pip_path} install -r {requirements} "
+    # First install botocore and boto3 with all dependencies
+    core_cmd = (
+        f"{pip_path} install "
+        f"--target {target_dir} "
+        "--no-cache-dir "
+        "--platform manylinux2014_x86_64 "
+        "--implementation cp "
+        "--python-version 3.9 "
+        "--only-binary=:all: "
+        "boto3>=1.28.0 "
+        "botocore>=1.31.0"
+    )
+    
+    # Then install other dependencies
+    other_deps_cmd = (
+        f"{pip_path} install -r {requirements_file} "
         f"--target {target_dir} "
         "--no-cache-dir "
         "--platform manylinux2014_x86_64 "
@@ -79,7 +92,9 @@ def install_dependencies(requirements, target_dir):
         "--no-deps"
     )
     
-    run_command(cmd)
+    # Run both installation commands
+    run_command(core_cmd)
+    run_command(other_deps_cmd)
     
     # Clean up unnecessary files
     for pattern in ["__pycache__", "*.dist-info", "*.egg-info", "tests", "test"]:
