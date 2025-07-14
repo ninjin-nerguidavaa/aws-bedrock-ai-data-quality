@@ -1,44 +1,87 @@
-# AWS Data Quality Bots - Manual Setup Guide
+# AWS Data Quality Bots - Manual Deployment Guide
 
-This document provides step-by-step instructions to manually set up the AWS Data Quality Bots project using the AWS Management Console.
+This document provides comprehensive, step-by-step instructions for manually deploying the AWS Data Quality Bots project using the AWS Management Console.
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
-2. [Step 1: Create S3 Buckets](#step-1-create-s3-buckets)
-3. [Step 2: Upload Sample Data](#step-2-upload-sample-data)
-4. [Step 3: Create IAM Roles and Policies](#step-3-create-iam-roles-and-policies)
-5. [Step 4: Create Lambda Function](#step-4-create-lambda-function)
-6. [Step 5: Create Glue Database and Table](#step-5-create-glue-database-and-table)
-7. [Step 6: Set Up EventBridge Rule](#step-6-set-up-eventbridge-rule)
-8. [Step 7: Test the Setup](#step-7-test-the-setup)
-9. [Step 8: Set Up SNS Notifications (Optional)](#step-8-set-up-sns-notifications-optional)
-10. [Step 9: Set Up CloudWatch Dashboard (Optional)](#step-9-set-up-cloudwatch-dashboard-optional)
+2. [Architecture Overview](#architecture-overview)
+3. [Step 1: Set Up S3 Buckets](#step-1-set-up-s3-buckets)
+4. [Step 2: Upload Sample Data](#step-2-upload-sample-data)
+5. [Step 3: Configure IAM Roles and Policies](#step-3-configure-iam-roles-and-policies)
+6. [Step 4: Deploy Lambda Function](#step-4-deploy-lambda-function)
+7. [Step 5: Set Up AWS Glue](#step-5-set-up-aws-glue)
+8. [Step 6: Configure EventBridge Rule](#step-6-configure-eventbridge-rule)
+9. [Step 7: Test the Deployment](#step-7-test-the-deployment)
+10. [Step 8: Set Up Monitoring (Optional)](#step-8-set-up-monitoring-optional)
 11. [Troubleshooting](#troubleshooting)
+12. [Maintenance and Operations](#maintenance-and-operations)
 
 ## Prerequisites
 
-- AWS Account with appropriate permissions
-- AWS CLI configured with your credentials
-- Python 3.8+ installed locally
-- Sample test data (in the `test_data/` directory)
+Before you begin, ensure you have the following:
 
-## Step 1: Create S3 Buckets
+### AWS Account Requirements
+- AWS Account with AdministratorAccess or equivalent permissions
+- AWS CLI configured with credentials
+- Default VPC and subnets in your preferred region
 
-1. **Log in** to the AWS Management Console
-2. Navigate to **S3** service
-3. Click **Create bucket**
+### Local Development Environment
+- Python 3.8 or later
+- pip (Python package manager)
+- Git (for cloning the repository)
+- AWS CLI v2
+
+### Project Files
+- Clone the repository:
+  ```bash
+  git clone https://github.com/your-org/aws-data-quality-bots.git
+  cd aws-data-quality-bots
+  ```
+- Sample test data is available in the `test_data/` directory
+
+## Architecture Overview
+
+The AWS Data Quality Bots solution consists of the following components:
+
+1. **S3 Buckets**: Store input data, processed results, and reports
+2. **AWS Lambda**: Serverless function that processes data quality checks
+3. **AWS Glue**: Data catalog and ETL service for data discovery and preparation
+4. **Amazon Bedrock**: AI service for intelligent data quality analysis
+5. **Amazon EventBridge**: Triggers the Lambda function on S3 upload events
+6. **Amazon SNS**: Sends notifications for data quality issues
+7. **Amazon CloudWatch**: Monitors and logs all activities
+
+## Step 1: Set Up S3 Buckets
+
+### Create Main Data Bucket
+1. Sign in to the AWS Management Console and open the Amazon S3 console
+2. Choose **Create bucket**
+3. Under **General configuration**:
    - **Bucket name**: `data-quality-bots-<your-account-id>-<region>` (must be globally unique)
-   - **Region**: Select your preferred region
-   - **Block Public Access**: Keep all settings enabled
-   - **Bucket Versioning**: Enable
-   - **Default encryption**: Enable (SSE-S3 or KMS)
-   - Click **Create bucket**
+   - **AWS Region**: Select your preferred region (e.g., us-east-1)
+4. Under **Object Ownership**:
+   - Select **ACLs disabled** (recommended)
+5. Under **Block Public Access settings for this bucket**:
+   - Keep all options checked
+   - Acknowledge the warning about the bucket not being public
+6. Under **Bucket Versioning**:
+   - Select **Enable**
+7. Under **Default encryption**:
+   - Select **Enable**
+   - Choose **AES-256 (SSE-S3)**
+8. Click **Create bucket**
 
-4. Create the following folders in your bucket:
-   - `input/` - For source data
-   - `output/` - For processed results
-   - `reports/` - For data quality reports
-   - `scripts/` - For Lambda function code
+### Create Required Folders
+1. In the S3 console, select your newly created bucket
+2. Click **Create folder** and create the following structure:
+   ```
+   ├── input/               # Source data files
+   │   └── customers/       # Customer data
+   ├── output/             # Processed data
+   ├── reports/            # Data quality reports
+   └── athena-results/     # Athena query results
+   ```
+3. Click **Save** after creating each folder
 
 ## Step 2: Upload Sample Data
 

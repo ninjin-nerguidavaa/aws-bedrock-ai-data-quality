@@ -5,47 +5,71 @@ A production-ready, AI-powered solution for autonomous data quality monitoring, 
 ## 🚀 Features
 
 - **AI-Powered Analysis**: Utilizes Amazon Bedrock's foundation models for intelligent data quality analysis
-- **Multi-Agent Architecture**: Implements specialized agents for different aspects of data quality:
-  - **Data Profiler**: Analyzes data structure, patterns, and distributions
-  - **Rule Engine**: Applies custom data quality rules and validations
-  - **Anomaly Detector**: Identifies unusual patterns and outliers in the data
-  - **Root Cause Analyzer**: Determines potential causes of data quality issues
-  - **Remediation Advisor**: Suggests fixes for identified data quality problems
-- **Comprehensive Monitoring**: Tracks data quality metrics over time with CloudWatch
-- **Flexible Scheduling**: Configurable execution schedules using CloudWatch Events
-- **Detailed Reporting**: Generates human-readable reports in Markdown format
-- **Serverless Architecture**: Built entirely on AWS serverless technologies
+- **Automated Data Quality Checks**: Implements comprehensive validation rules for data quality
+- **Flexible Data Sources**: Works with various data formats in S3
+- **Detailed Reporting**: Generates comprehensive data quality reports
+- **Serverless Architecture**: Built on AWS Lambda, Glue, and EventBridge
+- **Easy Deployment**: Simple setup with Terraform or manual AWS console configuration
+- **Extensible Design**: Easy to add custom validation rules and data sources
 
 ## 🏗️ Architecture
 
 ```mermaid
 graph TD
-    A[CloudWatch Events] -->|Trigger| B[Lambda Function]
-    B --> C[Glue Data Catalog]
-    B --> D[Athena]
-    B --> E[Amazon Bedrock]
-    B --> F[S3 Results Bucket]
-    B --> G[CloudWatch Metrics]
-    B --> H[SNS Notifications]
+    A[S3 Data Upload] -->|Triggers| B[EventBridge Rule]
+    B -->|Invokes| C[Lambda Function]
+    C -->|Queries| D[Glue Data Catalog]
+    C -->|Analyzes| E[Amazon Bedrock]
+    C -->|Stores Results| F[(S3 Bucket)]
+    C -->|Sends Alerts| G[SNS Topics]
+    C -->|Logs Metrics| H[CloudWatch]
     
-    subgraph "AWS Account"
-        B
-        C
-        D
-        E
-        F
-        G
-        H
+    subgraph "AWS Services"
+        B[EventBridge]
+        C[Lambda]
+        D[Glue Catalog]
+        E[Bedrock]
+        F[S3]
+        G[SNS]
+        H[CloudWatch]
     end
     
-    subgraph "Data Sources"
-        I[(S3 Data Lake)]
-        J[Glue Tables]
-    end
-    
-    C --> I
-    D --> J
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style F fill:#9cf,stroke:#333,stroke-width:2px
 ```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- AWS Account with appropriate permissions
+- Python 3.8+ and pip
+- AWS CLI configured with credentials
+- Terraform (for automated deployment)
+
+### Automated Deployment with Terraform
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-org/aws-data-quality-bots.git
+   cd aws-data-quality-bots
+   ```
+
+2. Initialize Terraform:
+   ```bash
+   terraform init
+   ```
+
+3. Review and customize variables in `terraform.tfvars`
+
+4. Deploy the infrastructure:
+   ```bash
+   terraform apply
+   ```
+
+### Manual Deployment
+
+For manual deployment steps, see [MANUAL_DEPLOYMENT.md](MANUAL_DEPLOYMENT.md)
 
 ## 🛠 Prerequisites
 
