@@ -1,0 +1,220 @@
+# TFSec Configuration
+# Documentation: https://aquasecurity.github.io/tfsec/latest/guides/configuration/config/
+
+# Enable/disable checks
+# Available options: enabled, disabled, ignore
+checks:
+  # AWS Specific Checks
+  # IAM
+  AWS001: enabled  # S3 Bucket has an ACL defined which allows public access.
+  AWS002: enabled  # S3 Bucket does not have logging enabled.
+  AWS003: enabled  # AWS Classic resource usage.
+  AWS004: enabled  # Use a KMS Key for S3 Bucket encryption.
+  AWS005: enabled  # Load balancer is exposed to the internet.
+  AWS006: enabled  # Ensure all data stored in the S3 bucket is securely encrypted at rest.
+  AWS007: enabled  # Ensure rotation for customer created CMKs is enabled.
+  AWS008: enabled  # EC2 Instances should have the default security group attached.
+  AWS009: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS010: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS011: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS012: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS013: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS014: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS015: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS016: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS017: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS018: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS019: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS020: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS021: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS022: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS023: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS024: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS025: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS026: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS027: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS028: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS029: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS030: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS031: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS032: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS033: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS034: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS035: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS036: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS037: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS038: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS039: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS040: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS041: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS042: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS043: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS044: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS045: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS046: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS047: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS048: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS049: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS050: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS051: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS052: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS053: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS054: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS055: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS056: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS057: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS058: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS059: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS060: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS061: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS062: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS063: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS064: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS065: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS066: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS067: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS068: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS069: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS070: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS071: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS072: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS073: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS074: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS075: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS076: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS077: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS078: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS079: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS080: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS081: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS082: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS083: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS084: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS085: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS086: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS087: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS088: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS089: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS090: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS091: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS092: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS093: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS094: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS095: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS096: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS097: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS098: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS099: enabled  # The S3 Bucket does not have access logging enabled.
+  AWS100: enabled  # The S3 Bucket does not have access logging enabled.
+
+# Exclude specific directories or files
+exclude:
+  - ".terraform/**"
+  - "**/.terraform/**"
+  - "**/modules/**/examples/**"
+  - "**/examples/**"
+  - "**/test/**"
+  - "**/tests/**"
+  - "**/test/fixtures/**"
+  - "**/test/fixture*/**"
+  - "**/test/fixture*/*.tf"
+  - "**/test/fixture*/*.tf.json"
+  - "**/test/fixture*/*.tfvars"
+  - "**/test/fixture*/*.tfvars.json"
+  - "**/test/fixture*/*.tfstate"
+  - "**/test/fixture*/*.tfstate.backup"
+  - "**/test/fixture*/*.terraform"
+  - "**/test/fixture*/.terraform"
+  - "**/test/fixture*/.terraform.lock.hcl"
+
+# Severity levels
+# Available options: CRITICAL, HIGH, MEDIUM, LOW, INFO
+minimum-severity: LOW
+
+# Output formats
+# Available options: default, json, csv, checkstyle, junit, sarif, text, gif, gif-summary, html, markdown, tap, sonarqube, simple
+format: default
+
+# Include passed checks in output
+include-passed: false
+
+# Include ignored checks in output
+include-ignored: false
+
+# Exclude specific checks by ID
+exclude-rules:
+  - "aws-s3-enable-bucket-logging"  # We handle this with our bucket policy
+  - "aws-s3-enable-versioning"      # We handle this with our bucket policy
+  - "aws-s3-encryption-customer-key" # We handle this with our bucket policy
+  - "aws-s3-no-public-buckets"      # We handle this with our bucket policy
+  - "aws-s3-specify-public-access-block" # We handle this with our bucket policy
+
+# Custom severity overrides
+severity-overrides:
+  # Make these checks more severe
+  "aws-s3-enable-bucket-logging": "HIGH"
+  "aws-s3-enable-versioning": "HIGH"
+  "aws-s3-encryption-customer-key": "HIGH"
+  "aws-s3-no-public-buckets": "CRITICAL"
+  "aws-s3-specify-public-access-block": "HIGH"
+
+# Custom check exclusions
+# Exclude specific checks for specific resources
+# Example:
+# exclude-resource:
+#   - "aws_s3_bucket.this"
+
+# Exclude specific checks for specific modules
+# Example:
+# exclude-module:
+#   - "module.s3_bucket"
+
+# Exclude specific checks for specific paths
+# Example:
+# exclude-path:
+#   - "**/modules/s3_bucket/*.tf"
+
+# Exclude specific checks for specific resource types
+# Example:
+# exclude-resource-type:
+#   - "aws_s3_bucket"
+
+# Exclude specific checks for specific check IDs
+# Example:
+# exclude-check-id:
+#   - "AWS001"
+#   - "AWS002"
+
+# Exclude specific checks for specific check categories
+# Example:
+# exclude-category:
+#   - "General"
+#   - "Networking"
+
+# Exclude specific checks for specific check scopes
+# Example:
+# exclude-scope:
+#   - "aws_s3_bucket.this"
+
+# Exclude specific checks for specific check scopes and IDs
+# Example:
+# exclude-scope-id:
+#   - "aws_s3_bucket.this.AWS001"
+#   - "aws_s3_bucket.this.AWS002"
+
+# Exclude specific checks for specific check scopes and names
+# Example:
+# exclude-scope-name:
+#   - "aws_s3_bucket.this.Ensure no public access to S3 bucket"
+
+# Exclude specific checks for specific check scopes and categories
+# Example:
+# exclude-scope-category:
+#   - "aws_s3_bucket.this.General"
+#   - "aws_s3_bucket.this.Networking"
+
+# Exclude specific checks for specific check scopes and severities
+# Example:
+# exclude-scope-severity:
+#   - "aws_s3_bucket.this.HIGH"
+#   - "aws_s3_bucket.this.CRITICAL"

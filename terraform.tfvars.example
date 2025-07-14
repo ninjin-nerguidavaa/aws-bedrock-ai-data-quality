@@ -1,0 +1,64 @@
+# AWS Configuration
+aws_region = "us-east-1"  # AWS region to deploy resources
+
+# Project Configuration
+project_name = "data-quality-bots"  # Used for resource naming
+environment  = "dev"                # Environment (dev, staging, prod, etc.)
+
+# Data Quality Configuration
+default_database  = "your_database_name"  # Default Glue database to check
+default_table     = "your_table_name"     # Default table to check (leave empty to check all tables)
+enable_ai_analysis = true                 # Enable AI-powered analysis using Amazon Bedrock
+log_level         = "INFO"               # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+log_retention_days = 30                   # Number of days to retain CloudWatch logs
+
+# Lambda Configuration
+lambda_memory_size = 1024      # Memory allocation in MB
+lambda_timeout    = 900        # Timeout in seconds (15 minutes)
+
+# VPC Configuration
+# Uncomment and set these if deploying the Lambda function in a VPC
+# vpc_id = "vpc-xxxxxxxxxxxxxxxxx"
+# lambda_subnet_ids = ["subnet-xxxxxxxxxxxxxxxxx", "subnet-yyyyyyyyyyyyyyyyy"]
+
+# Notification Configuration
+# List of email addresses to receive data quality alerts
+notification_emails = [
+  "your-email@example.com",
+  "team@example.com"
+]
+
+# Data Quality Check Schedule (in cron format)
+schedule_expression = "cron(0 0 * * ? *)"  # Run daily at midnight UTC
+
+# Tags for all resources
+tags = {
+  Project     = "data-quality-bots"
+  Environment = "dev"
+  ManagedBy   = "terraform"
+  Owner       = "your-team-name"
+  CostCenter  = "data-quality"
+  Department  = "data-engineering"
+}
+
+# Optional: Local development overrides
+# Uncomment and modify these for local development with LocalStack
+# aws_endpoints = {
+#   s3              = "http://localhost:4566"
+#   lambda          = "http://localhost:4566"
+#   iam             = "http://localhost:4566"
+#   sts             = "http://localhost:4566"
+#   cloudwatch      = "http://localhost:4566"
+#   cloudwatchevents = "http://localhost:4566"
+#   cloudwatchlogs  = "http://localhost:4566"
+#   sns             = "http://localhost:4566"
+#   glue            = "http://localhost:4566"
+#   athena          = "http://localhost:4566"
+#   ec2             = "http://localhost:4566"
+#   vpc             = "http://localhost:4566"
+#   bedrock         = "http://localhost:4566"
+#   bedrockruntime  = "http://localhost:4566"
+#   route53         = "http://localhost:4566"
+#   acm             = "http://localhost:4566"
+#   cloudfront      = "http://localhost:4566"
+# }

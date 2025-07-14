@@ -1,0 +1,228 @@
+# This file configures pre-commit hooks for the AWS Data Quality Bots project
+# For more information, see: https://pre-commit.com/
+
+repos:
+  # Base hooks for all file types
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0  # Updated to latest stable version
+    hooks:
+      - id: check-added-large-files  # Prevent large files from being committed
+      - id: check-merge-conflict    # Check for files with merge conflict strings
+      - id: check-yaml             # Validate YAML files
+      - id: check-json             # Validate JSON files
+      - id: check-toml             # Validate TOML files
+      - id: check-xml              # Validate XML files
+      - id: end-of-file-fixer      # Ensure files end with a newline
+      - id: trailing-whitespace    # Fix trailing whitespace
+      - id: mixed-line-ending      # Enforce consistent line endings
+        args: [--fix=lf]           # Use LF line endings
+      - id: detect-aws-credentials # Prevent committing AWS credentials
+      - id: detect-private-key     # Prevent committing private keys
+
+  # Python formatting and linting
+  - repo: https://github.com/psf/black
+    rev: 23.12.1  # Updated to latest stable version
+    hooks:
+      - id: black
+        name: black (python)
+        language_version: python3.9
+        args: [--line-length=100, --target-version=py39]
+        types_or: [python, pyi]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2  # Updated to latest stable version
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: [--profile=black, --line-length=100, --filter-files]
+        types: [python]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        name: flake8 (python)
+        additional_dependencies:
+          - flake8-bugbear==23.11.29
+          - flake8-comprehensions==3.14.0
+          - flake8-docstrings==1.7.0
+          - flake8-import-order==0.18.2
+          - flake8-rst-docstrings==0.3.0
+          - flake8-string-format==0.3.0
+          - flake8-variables-names==0.0.5
+          - mccabe==0.7.0
+          - pycodestyle==2.11.1
+          - pydocstyle==6.3.0
+          - pyflakes==3.1.0
+        args: [--max-line-length=100, --extend-ignore=E203, --per-file-ignores=__init__.py:F401]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0  # Updated to latest stable version
+    hooks:
+      - id: mypy
+        name: mypy (python)
+        additional_dependencies:
+          - types-python-dateutil>=2.8.19
+          - types-requests>=2.31.0
+          - boto3-stubs[essential]>=1.28.0
+          - types-boto3>=1.28.0
+          - types-botocore>=1.31.0
+          - types-pyyaml>=6.0.12
+        args: [
+          --ignore-missing-imports,
+          --disallow-untyped-defs,
+          --disallow-incomplete-defs,
+          --check-untyped-defs,
+          --disallow-untyped-decorators,
+          --no-warn-no-return,
+          --warn-redundant-casts,
+          --warn-unused-ignores,
+          --warn-return-any,
+          --warn-unreachable,
+          --strict-equality,
+          --strict-optional,
+          --no-implicit-optional,
+          --disallow-any-generics,
+          --disallow-subclassing-any,
+          --disallow-untyped-calls,
+          --disallow-untyped-globals,
+          --no-implicit-reexport,
+          --no-warn-unused-ignores,
+          --no-warn-no-return,
+          --no-warn-unused-configs,
+          --no-warn-return-any,
+          --no-warn-unreachable,
+          --no-warn-redundant-casts,
+          --no-warn-unused-ignores,
+          --no-warn-no-return,
+          --no-warn-unused-configs,
+          --no-warn-return-any,
+          --no-warn-unreachable,
+          --no-warn-redundant-casts,
+        ]
+        exclude: '^tests/'
+
+  # Terraform documentation and validation
+  - repo: https://github.com/terraform-docs/terraform-docs
+    rev: v0.16.0
+    hooks:
+      - id: terraform-docs-go
+        name: terraform-docs
+        args: [--config=.terraform-docs.yaml]
+        pass_filenames: false
+        always_run: true
+
+  # Terraform linting and validation
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.85.0
+    hooks:
+      - id: terraform_fmt
+        name: terraform fmt
+        description: Format Terraform files
+        entry: terraform fmt -check -diff -recursive
+        language: system
+        types: [hcl]
+        pass_filenames: true
+        always_run: true
+
+      - id: terraform_validate
+        name: terraform validate
+        description: Validate Terraform configuration
+        entry: terraform validate
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: terraform_tflint
+        name: tflint
+        description: Lint Terraform files
+        entry: tflint --config=.tflint.hcl
+        language: system
+        types: [hcl]
+        pass_filenames: true
+        always_run: true
+
+      - id: terraform_tfsec
+        name: tfsec
+        description: Static analysis security scanner for Terraform
+        entry: tfsec --config-file .tfsec.json
+        language: system
+        types: [hcl]
+        pass_filenames: true
+        always_run: true
+
+      - id: terraform_checkov
+        name: checkov
+        description: Static code analysis for infrastructure as code
+        entry: checkov --directory . --config-file .checkov.yaml
+        language: system
+        types: [hcl]
+        pass_filenames: false
+        always_run: true
+        args: [
+          --skip-check=CKV_AWS_111,  # Skip IAM policies that allow full "*:*" administrative privileges
+          --skip-check=CKV_AWS_107,  # Skip Ensure IAM policies does not allow credentials exposure
+          --skip-check=CKV_AWS_108,  # Skip Ensure IAM policies does not allow data exfiltration
+          --skip-check=CKV_AWS_109,  # Skip Ensure IAM policies does not allow permissions management without constraints
+          --skip-check=CKV_AWS_110,  # Skip Ensure IAM policies does not allow privilege escalation
+          --framework=terraform      # Only run Terraform checks
+        ]
+
+  # Python testing
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: Run tests
+        entry: python -m pytest -v --cov=./ --cov-report=term-missing --cov-fail-under=80
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+        additional_dependencies:
+          - pytest==7.4.3
+          - pytest-cov==4.1.0
+          - pytest-mock==3.12.0
+          - pytest-xdist==3.5.0
+          - pytest-timeout==2.1.0
+          - pytest-env==1.1.1
+          - pytest-sugar==0.9.7
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.35.0
+    hooks:
+      - id: markdownlint
+        name: markdownlint
+        description: Lint Markdown files
+        entry: markdownlint "**/*.md"
+        language: node
+        types: [markdown]
+        additional_dependencies:
+          - markdownlint-cli@0.35.0
+          - markdownlint-rule-titlecase@0.1.2
+          - markdownlint-rule-awesome-badges@2.3.1
+          - markdownlint-rule-no-dead-urls@2.2.0
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        name: yamllint
+        description: Lint YAML files
+        entry: yamllint
+        language: system
+        types: [yaml]
+        always_run: true
+
+  # JSON linting
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.27.1
+    hooks:
+      - id: check-github-workflows
+        name: Check GitHub Workflows
+        description: Validate GitHub workflow files
+        entry: check-jsonschema --checker jsonschema.GitHubActionsChecker
+        language: python
+        types: [yaml]
+        files: '^\.github/workflows/.*\.ya?ml$'

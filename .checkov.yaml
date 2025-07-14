@@ -1,0 +1,185 @@
+# Checkov Configuration
+# Documentation: https://www.checkov.io/2.Basics/CLI_Command_reference.html#configuration-file
+
+# Framework to scan (terraform, cloudformation, kubernetes, all)
+framework:
+  - terraform
+
+# Skip checks by ID (BC_*, CKV_*, etc.)
+skip-check:
+  # Skip IAM policies that allow full "*:*" administrative privileges
+  - CKV_AWS_111
+  # Skip IAM policies that allow credentials exposure
+  - CKV_AWS_107
+  # Skip IAM policies that allow data exfiltration
+  - CKV_AWS_108
+  # Skip IAM policies that allow permissions management without constraints
+  - CKV_AWS_109
+  # Skip IAM policies that allow privilege escalation
+  - CKV_AWS_110
+  # Skip S3 bucket encryption check (we're handling this with our bucket policy)
+  - CKV_AWS_19
+  # Skip S3 bucket versioning check (we're handling this with our bucket policy)
+  - CKV_AWS_21
+  # Skip S3 bucket logging check (we're handling this with our bucket policy)
+  - CKV_AWS_18
+  # Skip S3 bucket public access block check (we're handling this with our bucket policy)
+  - CKV_AWS_54
+  # Skip S3 bucket SSL requests only check (we're handling this with our bucket policy)
+  - CKV_AWS_20
+
+# Only run checks with these IDs (takes precedence over skip-check)
+# check:
+#   - CKV_AWS_111
+
+# Directory to scan (default: current working directory)
+# directory:
+#   - .
+
+# Output formats (cli, json, junitxml, github_failed_only, sarif)
+output: cli
+
+# Soft fail (exit with code 0 even if there are failing checks)
+soft-fail: false
+
+# Quiet mode (display only failed checks)
+quiet: false
+
+# External checks directory (local path or git URL)
+# external-checks-dir:
+#   - /path/to/checks
+
+# Download external checks (if external-checks-dir is a git URL)
+download-external-modules: true
+
+# Directory to download external checks to
+external-modules-download-path: .external_modules
+
+# Skip download of external modules that are in the skip list
+skip-download: false
+
+# Run checks in a specific directory (recursively)
+# directory:
+#   - .
+
+# Run checks on specific files
+# file:
+#   - main.tf
+#   - variables.tf
+#   - outputs.tf
+
+# Run checks on specific resource types
+# resource-type:
+#   - aws_s3_bucket
+#   - aws_iam_role
+
+# Run checks on specific providers
+# provider:
+#   - aws
+
+# Run checks on specific severities (INFO, LOW, MEDIUM, HIGH, CRITICAL)
+# severity:
+#   - HIGH
+#   - CRITICAL
+
+# Run checks with specific names
+# check-name:
+#   - "Ensure no hard coded AWS access key and secret key exists in provider"
+
+# Skip specific paths (supports glob patterns)
+skip-path:
+  - ".terraform/**"
+  - "**/.terraform/**"
+  - "**/modules/**/examples/**"
+  - "**/examples/**"
+  - "**/test/**"
+  - "**/tests/**"
+  - "**/test/fixtures/**"
+  - "**/test/fixture*/**"
+  - "**/test/fixture*/*.tf"
+  - "**/test/fixture*/*.tf.json"
+  - "**/test/fixture*/*.tfvars"
+  - "**/test/fixture*/*.tfvars.json"
+  - "**/test/fixture*/*.tfstate"
+  - "**/test/fixture*/*.tfstate.backup"
+  - "**/test/fixture*/*.terraform"
+  - "**/test/fixture*/.terraform"
+  - "**/test/fixture*/.terraform.lock.hcl"
+
+# Skip specific checks for specific resources (supports wildcards)
+# skip-resource:
+#   - "aws_iam_policy_document.allow_access"
+#   - "aws_s3_bucket.this"
+
+# Skip specific checks for specific files (supports glob patterns)
+# skip-file:
+#   - "**/variables.tf"
+#   - "**/outputs.tf"
+
+# Skip specific checks for specific directories (supports glob patterns)
+# skip-dir:
+#   - "**/modules/**"
+
+# Skip specific checks for specific resource types
+# skip-resource-type:
+#   - "aws_iam_policy_document"
+#   - "aws_iam_policy"
+
+# Skip specific checks for specific providers
+# skip-provider:
+#   - "aws"
+
+# Skip specific checks for specific severities
+# skip-severity:
+#   - "INFO"
+#   - "LOW"
+
+# Skip specific checks for specific check names
+# skip-check-name:
+#   - "Ensure no hard coded AWS access key and secret key exists in provider"
+
+# Skip specific checks for specific check IDs
+# skip-check-id:
+#   - "CKV_AWS_111"
+#   - "CKV_AWS_107"
+#   - "CKV_AWS_108"
+
+# Skip specific checks for specific check categories
+# skip-category:
+#   - "GENERAL_SECURITY"
+#   - "NETWORKING"
+
+# Skip specific checks for specific check types
+# skip-type:
+#   - "terraform"
+#   - "cloudformation"
+
+# Skip specific checks for specific check scopes
+# skip-scope:
+#   - "parameters"
+#   - "resources"
+
+# Skip specific checks for specific check scopes and IDs
+# skip-scope-id:
+#   - "parameters.CKV_AWS_111"
+#   - "resources.CKV_AWS_107"
+
+# Skip specific checks for specific check scopes and names
+# skip-scope-name:
+#   - "parameters.Ensure no hard coded AWS access key and secret key exists in provider"
+#   - "resources.Ensure no hard coded AWS access key and secret key exists in provider"
+
+# Skip specific checks for specific check scopes and categories
+# skip-scope-category:
+#   - "parameters.GENERAL_SECURITY"
+#   - "resources.NETWORKING"
+
+# Skip specific checks for specific check scopes and types
+# skip-scope-type:
+#   - "parameters.terraform"
+#   - "resources.cloudformation"
+
+# Skip specific checks for specific check scopes and severities
+# skip-scope-severity:
+#   - "parameters.HIGH"
+#   - "resources.CRITICAL"

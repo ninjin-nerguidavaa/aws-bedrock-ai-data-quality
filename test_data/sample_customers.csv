@@ -1,0 +1,21 @@
+customer_id,first_name,last_name,email,phone,address,city,state,postal_code,country,date_of_birth,join_date,last_purchase_date,total_purchases,avg_order_value,is_active,segment,preferred_category,credit_score,account_balance
+1001,John,Smith,john.smith@example.com,555-0101,123 Main St,New York,NY,10001,USA,1985-03-15,2020-01-15,2023-07-10,45,125.50,True,Premium,Electronics,750,1250.75
+1002,Jane,Doe,jane.doe@example.com,555-0102,456 Oak Ave,Los Angeles,CA,90001,USA,1990-07-22,2020-02-20,2023-07-12,32,89.99,True,Standard,Clothing,680,875.30
+1003,Robert,Johnson,robertj@example.com,555-0103,789 Pine Rd,Chicago,IL,60601,USA,1978-11-05,2019-11-10,2023-06-28,78,210.25,True,Premium,Home & Kitchen,820,3420.50
+1004,Emily,Williams,emily.w@example.com,555-0104,321 Elm St,Houston,TX,77001,USA,1995-04-30,2021-03-05,2023-07-05,12,45.75,True,Basic,Beauty,720,230.00
+1005,Michael,Brown,michael.b@example.com,555-0105,654 Maple Dr,Phoenix,AZ,85001,USA,1982-09-14,2018-09-15,2022-12-15,56,178.90,False,Standard,Electronics,690,0.00
+1006,Sarah,Davis,sarahd@example.com,555-0106,987 Cedar Ln,Philadelphia,PA,19101,USA,1993-12-25,2022-01-10,2023-07-08,8,65.30,True,New,Books,710,150.25
+1007,David,Wilson,dwilson@example.com,555-0107,159 Spruce St,San Antonio,TX,78201,USA,1975-06-18,2019-05-20,2023-07-11,92,305.75,True,Premium,Electronics,780,5120.80
+1008,Jennifer,Miller,jmiller@example.com,555-0108,753 Birch Blvd,San Diego,CA,92101,USA,1988-02-28,2020-07-12,2023-06-30,24,95.45,True,Standard,Clothing,650,420.30
+1009,James,Jones,james.j@example.com,555-0109,246 Willow Way,Dallas,TX,75201,USA,1991-10-10,2021-08-05,2023-07-02,15,72.10,True,Basic,Home & Kitchen,700,180.75
+1010,Patricia,Taylor,ptaylor@example.com,555-0110,864 Redwood Dr,San Jose,CA,95101,USA,1980-05-12,2019-12-01,2023-06-25,68,245.60,True,Premium,Electronics,810,3875.20
+1011,Thomas,Anderson,tanderson@example.com,555-0111,975 Sequoia Ct,Austin,TX,73301,USA,1972-08-24,2018-11-15,2023-05-30,42,156.25,False,Standard,Sports,670,0.00
+1012,Elizabeth,Thomas,ethomas@example.com,555-0112,135 Magnolia Ln,Jacksonville,FL,32201,USA,1994-03-08,2022-02-20,2023-07-07,5,38.90,True,New,Beauty,690,75.40
+1013,Richard,Jackson,rjackson@example.com,555-0113,579 Dogwood Dr,Fort Worth,TX,76101,USA,1983-07-19,2020-09-10,2023-07-09,37,112.75,True,Standard,Electronics,730,1620.50
+1014,Jessica,White,jwhite@example.com,555-0114,864 Sycamore St,Columbus,OH,43201,USA,1987-11-30,2021-04-15,2023-06-28,19,84.20,True,Standard,Clothing,710,320.80
+1015,Charles,Harris,charles.h@example.com,555-0115,246 Chestnut Ave,Charlotte,NC,28201,USA,1979-01-25,2019-06-20,2023-07-06,53,198.30,True,Premium,Home & Kitchen,790,2750.40
+1016,Ashley,Martin,amartin@example.com,555-0116,753 Poplar Ln,Indianapolis,IN,46201,USA,1992-09-05,2021-11-10,2023-06-29,11,67.80,True,Basic,Books,680,145.20
+1017,Joseph,Thompson,jthompson@example.com,555-0117,159 Aspen Way,San Francisco,CA,94101,USA,1977-04-12,2018-08-15,2023-07-01,87,276.90,True,Premium,Electronics,830,4520.70
+1018,Karen,Garcia,kgarcia@example.com,555-0118,864 Juniper Dr,Seattle,WA,98101,USA,1984-12-08,2020-10-05,2023-06-27,29,103.45,True,Standard,Beauty,720,580.30
+1019,Matthew,Martinez,mmartinez@example.com,555-0119,975 Cypress St,Denver,CO,80201,USA,1989-06-22,2021-07-12,2023-07-03,7,52.10,True,New,Clothing,700,95.60
+1020,Lisa,Robinson,lrobinson@example.com,555-0120,135 Redbud Ln,Washington,DC,20001,USA,1976-02-14,2019-03-28,2023-07-04,63,234.80,True,Premium,Electronics,820,3980.90

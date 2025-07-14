@@ -1,0 +1,179 @@
+# Terraform Docs Configuration
+# See: https://terraform-docs.io/user-guide/configuration/
+
+formats:
+  markdown:
+    # Generate markdown format output
+    enabled: true
+    # Output file name (default: README.md)
+    output: README.md
+    # Template to use for markdown output
+    template: |-
+      # {{ .Module.Name }}
+
+      {{ .Header }}
+
+      ## Requirements
+
+      | Name | Version |
+      |------|---------|
+      {{- range .Module.Requirements }}
+      | {{ .Name }} | {{ range $i, $v := .Version }}{{ if $i }}, {{ end }}{{ $v }}{{ end }} |
+      {{- end }}
+
+      ## Providers
+
+      | Name | Version |
+      |------|---------|
+      {{- range .Module.Providers }}
+      | {{ .FullName }} | {{ if .Version }}{{ .Version }}{{ else }}n/a{{ end }} |
+      {{- end }}
+
+      ## Modules
+
+      | Name | Source | Version |
+      |------|--------|---------|
+      {{- range .Module.ModuleCalls }}
+      | {{ .Name }} | {{ .Source }} | {{ if .Version }}{{ .Version }}{{ else }}n/a{{ end }} |
+      {{- end }}
+
+      ## Resources
+
+      | Name | Type |
+      |------|------|
+      {{- range .Module.Resources }}
+      | {{ .Name }} | {{ .Type }} |
+      {{- end }}
+
+      ## Inputs
+
+      | Name | Description | Type | Default | Required |
+      |------|-------------|------|---------|:--------:|
+      {{- range .Module.Inputs }}
+      | {{ .Name }} | {{ .Description }} | {{ .Type }} | {{ if .Default }}{{ .Default }}{{ else }}n/a{{ end }} | {{ .Required }} |
+      {{- end }}
+
+      ## Outputs
+
+      | Name | Description |
+      |------|-------------|
+      {{- range .Module.Outputs }}
+      | {{ .Name }} | {{ .Description }} |
+      {{- end }}
+
+    # Whether to print the output to console (default: false)
+    print: true
+    # Whether to sort the inputs and outputs (default: false)
+    sort: true
+    # Whether to show required/optional for inputs (default: false)
+    required: true
+    # Whether to show the default values for inputs (default: false)
+    default: true
+    # Whether to show the type of the inputs (default: false)
+    type: true
+    # Whether to show the description of the inputs (default: true)
+    description: true
+    # Whether to show the description of the outputs (default: true)
+    output-description: true
+    # Whether to show the header (default: true)
+    header: true
+    # Whether to show the requirements (default: true)
+    requirements: true
+    # Whether to show the providers (default: true)
+    providers: true
+    # Whether to show the modules (default: true)
+    modules: true
+    # Whether to show the resources (default: true)
+    resources: true
+    # Whether to show the inputs (default: true)
+    inputs: true
+    # Whether to show the outputs (default: true)
+    outputs: true
+    # Whether to show the footer (default: true)
+    footer: true
+
+  # JSON format configuration
+  json:
+    enabled: true
+    # Output file name (default: docs/terraform-docs.json)
+    output: docs/terraform-docs.json
+    # Whether to print the output to console (default: false)
+    print: false
+    # Whether to sort the inputs and outputs (default: false)
+    sort: true
+    # Whether to pretty print the JSON (default: true)
+    pretty: true
+    # Whether to show the header (default: true)
+    header: true
+    # Whether to show the requirements (default: true)
+    requirements: true
+    # Whether to show the providers (default: true)
+    providers: true
+    # Whether to show the modules (default: true)
+    modules: true
+    # Whether to show the resources (default: true)
+    resources: true
+    # Whether to show the inputs (default: true)
+    inputs: true
+    # Whether to show the outputs (default: true)
+    outputs: true
+
+# Settings for the documentation generation
+settings:
+  # Whether to show the color in the output (default: true)
+  color: true
+  # The number of spaces to use for indentation (default: 2)
+  indent: 2
+  # The maximum width of the output (default: 0, no limit)
+  max-width: 0
+  # Whether to show the required/optional for inputs (default: false)
+  required: true
+  # Whether to show the default values for inputs (default: false)
+  default: true
+  # Whether to show the type of the inputs (default: false)
+  type: true
+  # Whether to show the description of the inputs (default: true)
+  description: true
+  # Whether to show the description of the outputs (default: true)
+  output-description: true
+  # Whether to show the header (default: true)
+  header: true
+  # Whether to show the requirements (default: true)
+  requirements: true
+  # Whether to show the providers (default: true)
+  providers: true
+  # Whether to show the modules (default: true)
+  modules: true
+  # Whether to show the resources (default: true)
+  resources: true
+  # Whether to show the inputs (default: true)
+  inputs: true
+  # Whether to show the outputs (default: true)
+  outputs: true
+  # Whether to show the footer (default: true)
+  footer: true
+
+# File patterns to include (default: all .tf files)
+files:
+  - '**/*.tf'
+  - '**/*.tf.json'
+
+# File patterns to exclude (default: none)
+exclude:
+  - '.terraform/**'
+  - '**/.terraform/**'
+  - '**/modules/**/examples/**'
+  - '**/examples/**'
+  - '**/test/**'
+  - '**/tests/**'
+  - '**/test/fixtures/**'
+  - '**/test/fixture*/**'
+  - '**/test/fixture*/**/*.tf'
+  - '**/test/fixture*/**/*.tf.json'
+  - '**/test/fixture*/**/*.tfvars'
+  - '**/test/fixture*/**/*.tfvars.json'
+  - '**/test/fixture*/**/*.tfstate'
+  - '**/test/fixture*/**/*.tfstate.backup'
+  - '**/test/fixture*/**/*.terraform'
+  - '**/test/fixture*/**/.terraform'
+  - '**/test/fixture*/**/.terraform.lock.hcl'
