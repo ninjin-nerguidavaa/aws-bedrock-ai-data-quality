@@ -42,7 +42,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
 !build/scripts/  # Keep build scripts in version control
 develop-eggs/
 dist/
@@ -62,7 +61,6 @@ wheels/
 # Lambda build artifacts
 /lambda_functions/*/build/
 /lambda_functions/*/dist/
-/lambda_functions/*/*.zip
 !lambda_functions/data_quality_checker/lambda_function.py
 !lambda_functions/data_quality_checker/requirements.txt
 
@@ -111,7 +109,6 @@ venv.bak/
 # Project Specific
 # ============================================
 # Lambda deployment packages
-*.zip
 !lambda_functions/data_quality_checker/requirements.txt
 
 # Local development
