@@ -9,6 +9,7 @@ A production-ready, AI-powered solution for autonomous data quality monitoring, 
 - **Flexible Data Sources**: Works with various data formats in S3
 - **Detailed Reporting**: Generates comprehensive data quality reports
 - **Serverless Architecture**: Built on AWS Lambda, Glue, and EventBridge
+- **Efficient Dependencies**: Uses Lambda Layers for better package management
 - **Easy Deployment**: Simple setup with Terraform or manual AWS console configuration
 - **Extensible Design**: Easy to add custom validation rules and data sources
 
@@ -43,7 +44,7 @@ graph TD
 ### Prerequisites
 
 - AWS Account with appropriate permissions
-- Python 3.8+ and pip
+- Python 3.9+ and pip
 - AWS CLI configured with credentials
 - Terraform (for automated deployment)
 
@@ -69,7 +70,37 @@ graph TD
 
 ### Manual Deployment
 
-For manual deployment steps, see [MANUAL_DEPLOYMENT.md](MANUAL_DEPLOYMENT.md)
+For manual deployment steps, see [MANUAL_STEPS.md](manual_steps.md)
+
+## Lambda Layer Deployment
+
+This project uses AWS Lambda Layers to manage dependencies. The layer includes all required Python packages, keeping your Lambda deployment package small and efficient.
+
+### Building the Layer
+
+1. Ensure you have Python 3.9+ installed
+2. Run the build script:
+   ```bash
+   python3 scripts/build_layer.py
+   ```
+3. The layer package will be created at: `build/layer/data-quality-deps.zip`
+
+### Uploading the Layer to AWS
+
+1. Go to AWS Lambda Console → Layers → Create Layer
+2. Configure the layer:
+   - Name: `data-quality-deps`
+   - Upload the ZIP file: `build/layer/data-quality-deps.zip`
+   - Select Python 3.9 as the compatible runtime
+   - Add Python 3.9 as a compatible architecture (x86_64)
+3. Note the ARN of the created layer for use in your Lambda function
+
+### Using the Layer in Your Lambda Function
+
+1. In your Lambda function configuration, go to the "Layers" section
+2. Click "Add a layer"
+3. Select "Custom layers" and choose the `data-quality-deps` layer
+4. Select the latest version and click "Add"
 
 ## 🛠 Prerequisites
 

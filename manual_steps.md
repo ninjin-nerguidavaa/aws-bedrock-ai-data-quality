@@ -133,37 +133,80 @@ The AWS Data Quality Bots solution consists of the following components:
 5. Click **Create policy**
 6. Attach this policy to your `DataQualityLambdaRole`
 
-## Step 4: Create Lambda Function
+## Step 4: Deploy Lambda Function
+
+### Create Lambda Layer
+
+1. **Build the Layer Package**:
+   ```bash
+   cd aws-data-quality-bots
+   python3 scripts/build_layer.py
+   ```
+   This will create the layer package at `build/layer/data-quality-deps.zip`
+
+2. **Upload to AWS**:
+   - Go to AWS Lambda Console → Layers → Create Layer
+   - Configure the layer:
+     - Name: `data-quality-deps`
+     - Upload the ZIP file: `build/layer/data-quality-deps.zip`
+     - Select Python 3.9 as the compatible runtime
+     - Add Python 3.9 as a compatible architecture (x86_64)
+   - Click **Create** and note the Layer ARN
+
+### Create Lambda Function
 
 1. Navigate to **Lambda** > **Create function**
 2. Select **Author from scratch**
-   - **Function name**: `data-quality-checker`
+3. Configure basic settings:
+   - **Function name**: `data-quality-processor`
    - **Runtime**: Python 3.9
    - **Architecture**: x86_64
-   - **Permissions**: Use an existing role
-   - **Existing role**: Select `DataQualityLambdaRole`
-   - Click **Create function**
+   - **Permissions**: Use an existing role (select the role created in Step 3)
 
-3. In the **Code** tab:
-   - Upload your Lambda function code (zip file containing `lambda_function.py` and dependencies)
-   - Or use the inline editor to paste the code
+### Add Layer to Lambda Function
 
-4. **Basic Settings**:
+1. In your Lambda function, go to the **Layers** section
+2. Click **Add a layer**
+3. Select **Custom layers**
+4. Choose the `data-quality-deps` layer you created
+5. Select the latest version
+6. Click **Add**
+
+3. **Upload Lambda Code**:
+   - In the **Code** tab, click **Upload from** and select **.zip file**
+   - Upload a zip file containing only your Lambda function code (without dependencies):
+     ```bash
+     cd aws-data-quality-bots/lambda_functions/data_quality_checker
+     zip -r ../../../lambda_code.zip . -x "*__pycache__*"
+     ```
+   - Or use the inline editor to paste the code from `lambda_function.py`
+
+4. **Configure Basic Settings**:
    - **Handler**: `lambda_function.lambda_handler`
+   - **Runtime**: Python 3.9
+   - **Architecture**: x86_64
    - **Memory**: 1024 MB
    - **Timeout**: 5 minutes
+   - **Execution role**: Choose the IAM role created earlier
 
-5. **Environment Variables**:
-   - Add the following:
-     - `S3_BUCKET`: `data-quality-bots-<your-account-id>-<region>`
-     - `S3_INPUT_PREFIX`: `input/`
-     - `S3_OUTPUT_PREFIX`: `output/`
-     - `S3_REPORT_PREFIX`: `reports/`
-     - `GLUE_DATABASE`: `data_quality_db`
-     - `GLUE_TABLE`: `customers`
-     - `ATHENA_OUTPUT_LOCATION`: `s3://data-quality-bots-<your-account-id>-<region>/athena-results/`
+5. **Add Environment Variables**:
+   - `S3_BUCKET`: `data-quality-bots-<your-account-id>-<region>`
+   - `S3_INPUT_PREFIX`: `input/`
+   - `S3_OUTPUT_PREFIX`: `output/`
+   - `S3_REPORT_PREFIX`: `reports/`
+   - `GLUE_DATABASE`: `data_quality_db`
+   - `GLUE_TABLE`: `customers`
+   - `ATHENA_OUTPUT_LOCATION`: `s3://data-quality-bots-<your-account-id>-<region>/athena-results/`
 
-6. Click **Save**
+6. **Add the Lambda Layer**:
+   - In the Lambda function page, scroll down to the **Layers** section
+   - Click **Add a layer**
+   - Select **Custom layers**
+   - Choose the `data-quality-deps` layer you created
+   - Select the latest version
+   - Click **Add**
+
+7. Click **Deploy** to save your changes
 
 ## Step 5: Create Glue Database and Table
 

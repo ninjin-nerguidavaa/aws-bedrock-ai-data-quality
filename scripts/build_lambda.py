@@ -2,8 +2,8 @@
 """
 Lambda Deployment Package Builder
 
-This script creates a deployment package for AWS Lambda functions.
-It packages the Lambda function code and its dependencies into a ZIP file.
+This script creates an optimized deployment package for AWS Lambda functions.
+It excludes unnecessary files and is designed to stay under the 50MB limit.
 """
 
 import os
@@ -11,6 +11,7 @@ import sys
 import zipfile
 import shutil
 import subprocess
+import re
 from pathlib import Path
 
 # Get the absolute path to the script's directory
@@ -21,16 +22,41 @@ PROJECT_ROOT = SCRIPT_DIR.parent.absolute()
 LAMBDA_DIR = PROJECT_ROOT / "lambda_functions" / "data_quality_checker"
 BUILD_DIR = PROJECT_ROOT / "build" / "lambda"
 PACKAGE_NAME = "data_quality_checker.zip"
+TEMP_DIR = BUILD_DIR / "temp"
 
-print(f"Script directory: {SCRIPT_DIR}")
+# Files and directories to exclude from the package
+EXCLUDE_PATTERNS = [
+    # Python cache and compiled files
+    "__pycache__", "*.py[cod]", "*$py.class",
+    # Distribution / packaging
+    ".Python", "build/", "develop-eggs/", "dist/", "downloads/", "eggs/", 
+    ".eggs/", "lib/", "lib64/", "parts/", "sdist/", "var/", "wheels/",
+    "*.egg-info/", ".installed.cfg", "*.egg",
+    # Unit test / coverage reports
+    "htmlcov/", ".tox/", ".nox/", ".coverage", ".coverage.*", ".cache",
+    "nosetests.xml", "coverage.xml", "*.cover", "*.py,cover", 
+    ".hypothesis/", ".pytest_cache/",
+    # Jupyter Notebook
+    ".ipynb_checkpoints",
+    # Environments
+    ".venv", "env/", "venv/", "ENV/", ".env", ".python-version",
+    # IDEs and editors
+    ".idea/", ".vscode/", "*.swp", "*.swo", "*~",
+    # Specific large packages (will use Lambda Layers)
+    "numpy*", "pandas*", "pyarrow*", "boto3*", "botocore*"
+]
+
+print(f"=== Lambda Deployment Package Builder ===")
 print(f"Project root: {PROJECT_ROOT}")
-print(f"Lambda directory: {LAMBDA_DIR}")
+print(f"Lambda source: {LAMBDA_DIR}")
 print(f"Build directory: {BUILD_DIR}")
+print(f"Excluding patterns: {', '.join(EXCLUDE_PATTERNS)}\n")
 
 
 def run_command(command, cwd=None):
     """Run a shell command and return its output."""
     try:
+        print(f"Running: {command}")
         result = subprocess.run(
             command,
             cwd=cwd,
@@ -40,107 +66,165 @@ def run_command(command, cwd=None):
             stderr=subprocess.PIPE,
             text=True
         )
+        if result.stdout.strip():
+            print(f"Output: {result.stdout}")
         return result.stdout
     except subprocess.CalledProcessError as e:
         print(f"Error running command: {command}")
-        print(f"Error: {e.stderr}")
+        if e.stderr:
+            print(f"Error: {e.stderr}")
         sys.exit(1)
 
 
-def create_zip_package():
-    """Create a ZIP package for the Lambda function."""
-    # Create build directory
-    BUILD_DIR.mkdir(parents=True, exist_ok=True)
-    output_zip = BUILD_DIR / PACKAGE_NAME
+def should_exclude(file_path, patterns):
+    """Check if a file should be excluded based on patterns."""
+    file_str = str(file_path)
+    return any(re.search(pattern.replace('*', '.*').replace('/', '[/\\\\]') + '$', file_str) 
+               for pattern in patterns)
+
+
+def copy_files(src, dst, exclude_patterns=None):
+    """Copy files from src to dst, excluding files that match patterns."""
+    if exclude_patterns is None:
+        exclude_patterns = []
     
-    # Create a temporary directory
-    temp_dir = PROJECT_ROOT / "temp_lambda_build"
-    if temp_dir.exists():
-        shutil.rmtree(temp_dir)
-    temp_dir.mkdir()
+    src_path = Path(src)
+    dst_path = Path(dst)
+    
+    if src_path.is_file():
+        if not should_exclude(src_path, exclude_patterns):
+            dst_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_path, dst_path)
+            print(f"Copied: {src_path.relative_to(PROJECT_ROOT)}")
+        return
+    
+    for item in src_path.iterdir():
+        if should_exclude(item, exclude_patterns):
+            print(f"Excluded: {item.relative_to(PROJECT_ROOT)}")
+            continue
+            
+        if item.is_dir():
+            copy_files(item, dst_path / item.name, exclude_patterns)
+        else:
+            dst_path.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(item, dst_path / item.name)
+            print(f"Copied: {item.relative_to(PROJECT_ROOT)}")
+
+
+def install_dependencies(requirements_file, target_dir):
+    """Install Python dependencies with optimization for Lambda."""
+    print("\nInstalling dependencies...")
+    
+    # Create a temporary virtual environment using the full path to python3
+    venv_dir = TEMP_DIR / "venv"
+    run_command(f"/usr/bin/python3 -m venv {venv_dir}")
     
     try:
-        print(f"\n=== Copying Lambda function from {LAMBDA_DIR} ===")
-        # Check if source directory exists
-        if not LAMBDA_DIR.exists():
-            print(f"Error: Lambda directory not found at {LAMBDA_DIR}")
-            sys.exit(1)
-            
-        # List all Python files in the Lambda directory
-        py_files = list(LAMBDA_DIR.glob("*.py"))
-        if not py_files:
-            print(f"Warning: No Python files found in {LAMBDA_DIR}")
-        else:
-            print(f"Found {len(py_files)} Python files:")
-            for py_file in py_files:
-                print(f"  - {py_file.name}")
-                
-        # Copy Python files
-        for py_file in py_files:
-            dest_path = temp_dir / py_file.name
-            print(f"Copying {py_file} to {dest_path}")
-            shutil.copy2(py_file, temp_dir)
+        # Use the virtual environment's pip
+        pip_path = venv_dir / "bin" / "pip"
+        if sys.platform == "win32":
+            pip_path = venv_dir / "Scripts" / "pip.exe"
         
-        # Install dependencies
+        # Upgrade pip
+        run_command(f"{pip_path} install --upgrade pip")
+        
+        # Install only the required packages
+        run_command(
+            f"{pip_path} install -r {requirements_file} "
+            f"--target {target_dir} "
+            "--no-cache-dir "
+            "--only-binary=:none: "
+            "--platform manylinux2014_x86_64 "
+            "--implementation cp "
+            "--python-version 3.9 "
+            "--no-deps"
+        )
+        
+        # Clean up Python cache files
+        for pycache in target_dir.rglob("__pycache__"):
+            shutil.rmtree(pycache, ignore_errors=True)
+        
+        # Remove test directories and other unnecessary files
+        for pattern in ["*.dist-info", "*.egg-info", "tests", "test", "doc", "docs"]:
+            for item in target_dir.glob(f"**/{pattern}"):
+                if item.is_dir():
+                    shutil.rmtree(item, ignore_errors=True)
+                else:
+                    try:
+                        item.unlink()
+                    except (FileNotFoundError, PermissionError):
+                        pass
+        
+    except Exception as e:
+        print(f"Error installing dependencies: {e}")
+        raise
+    finally:
+        # Clean up virtual environment
+        shutil.rmtree(venv_dir, ignore_errors=True)
+
+
+def create_zip_package():
+    """Create an optimized ZIP package for Lambda deployment."""
+    try:
+        # Clean and prepare build directory
+        if BUILD_DIR.exists():
+            shutil.rmtree(BUILD_DIR)
+        
+        TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # Create package directory structure
+        package_dir = TEMP_DIR / "package"
+        package_dir.mkdir()
+        
+        print("Copying Lambda function files...")
+        copy_files(LAMBDA_DIR, package_dir, EXCLUDE_PATTERNS)
+        
+        # Install dependencies if requirements.txt exists
         requirements_file = LAMBDA_DIR / "requirements.txt"
         if requirements_file.exists():
-            print(f"\n=== Installing dependencies from {requirements_file} ===")
-            print(f"Installing to: {temp_dir}")
-            cmd = [
-                sys.executable,  # Use the same Python interpreter
-                "-m", "pip", 
-                "install", 
-                "-r", str(requirements_file), 
-                "-t", str(temp_dir),
-                "--no-cache-dir"
-            ]
-            print(f"Running command: {' '.join(cmd)}")
-            run_command(" ".join(cmd), cwd=PROJECT_ROOT)
-        else:
-            print(f"Warning: No requirements.txt found at {requirements_file}")
+            install_dependencies(requirements_file, package_dir)
         
-        # List all files to be included in the ZIP
-        print(f"\n=== Creating ZIP package at {output_zip} ===")
-        print(f"Contents to be zipped from: {temp_dir}")
+        # Create the ZIP file
+        zip_path = BUILD_DIR / PACKAGE_NAME
+        print(f"\nCreating optimized ZIP file: {zip_path}")
         
-        # First, verify files exist in temp directory
-        temp_files = list(temp_dir.glob("*"))
-        if not temp_files:
-            print("Error: No files found in temporary directory. Nothing to zip.")
-            sys.exit(1)
-            
-        print("Files to be included in the ZIP:")
-        for f in temp_files:
-            print(f"  - {f.name} ({f.stat().st_size} bytes)")
-        
-        # Create ZIP file
-        with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for root, _, files in os.walk(temp_dir):
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as zipf:
+            for root, _, files in os.walk(package_dir):
                 for file in files:
                     file_path = Path(root) / file
-                    arcname = os.path.relpath(file_path, temp_dir)
-                    print(f"  Adding to ZIP: {file_path} as {arcname}")
+                    arcname = file_path.relative_to(package_dir)
                     zipf.write(file_path, arcname)
         
-        # Verify the ZIP was created and has content
-        if not output_zip.exists():
-            print(f"Error: Failed to create ZIP file at {output_zip}")
-            sys.exit(1)
-            
-        zip_size = os.path.getsize(output_zip)
-        print(f"\n✅ Successfully created Lambda package: {output_zip}")
-        print(f"Package size: {zip_size / (1024 * 1024):.2f} MB")
+        # Verify the package size
+        size_mb = zip_path.stat().st_size / (1024 * 1024)
+        print(f"\n✅ Successfully created Lambda package: {zip_path}")
+        print(f"📦 Package size: {size_mb:.2f} MB")
         
-        # List contents of the ZIP file
-        print("\nZIP file contents:")
-        with zipfile.ZipFile(output_zip, 'r') as zipf:
+        if size_mb > 45:  # Leave some buffer under 50MB
+            print("\n⚠️  WARNING: Package is approaching the 50MB limit!")
+            print("   Consider using Lambda Layers for large dependencies.")
+        
+        # List the largest files in the package
+        print("\nLargest files in the package:")
+        file_sizes = []
+        with zipfile.ZipFile(zip_path, 'r') as zipf:
             for file_info in zipf.infolist():
-                print(f"  - {file_info.filename} ({file_info.file_size} bytes)")
+                if file_info.file_size > 100000:  # Files larger than 100KB
+                    file_sizes.append((file_info.filename, file_info.file_size))
         
+        # Sort by size (largest first) and print top 10
+        for filename, size in sorted(file_sizes, key=lambda x: x[1], reverse=True)[:10]:
+            print(f"  - {filename}: {size/1024/1024:.2f} MB")
+        
+        return zip_path
+        
+    except Exception as e:
+        print(f"\n❌ Error creating Lambda package: {e}")
+        sys.exit(1)
     finally:
-        # Clean up
-        if temp_dir.exists():
-            shutil.rmtree(temp_dir)
+        # Clean up temporary directory
+        if TEMP_DIR.exists():
+            shutil.rmtree(TEMP_DIR, ignore_errors=True)
 
 
 if __name__ == "__main__":
