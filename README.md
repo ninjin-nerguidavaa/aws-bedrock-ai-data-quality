@@ -1,14 +1,16 @@
 # AWS Data Quality Bots with Amazon Bedrock
 
-A production-ready, AI-powered solution for autonomous data quality monitoring, analysis, and remediation in AWS data lakes. This solution leverages Amazon Bedrock's foundation models to provide intelligent insights and recommendations for data quality issues.
+A production-ready, AI-powered solution for autonomous data quality monitoring, analysis, and remediation in AWS data lakes. This solution leverages Amazon Bedrock's Titan foundation models to provide intelligent insights and recommendations for data quality issues in real-time.
+
+> **New**: Now with enhanced AI-powered analysis and async processing for improved performance and reliability!
 
 ## 🚀 Features
 
-- **AI-Powered Analysis**: Utilizes Amazon Bedrock's foundation models for intelligent data quality analysis
+- **AI-Powered Analysis**: Leverages Amazon Titan models through Bedrock for intelligent data quality insights and recommendations
 - **Automated Data Quality Checks**: Implements comprehensive validation rules for data quality
 - **Flexible Data Sources**: Works with various data formats in S3
 - **Detailed Reporting**: Generates comprehensive data quality reports
-- **Serverless Architecture**: Built on AWS Lambda, Glue, and EventBridge
+- **Serverless Architecture**: Built on AWS Lambda (with async processing), Glue, and EventBridge
 - **Efficient Dependencies**: Utilizes AWS-managed AWSSDKPandas-Python39 layer for reliable dependency management
 - **Easy Deployment**: Simple setup with Terraform or manual AWS console configuration
 - **Extensible Design**: Easy to add custom validation rules and data sources
@@ -17,27 +19,40 @@ A production-ready, AI-powered solution for autonomous data quality monitoring, 
 
 ```mermaid
 graph TD
-    A[S3 Data Upload] -->|Triggers| B[EventBridge Rule]
-    B -->|Invokes| C[Lambda Function]
-    C -->|Queries| D[Glue Data Catalog]
-    C -->|Analyzes| E[Amazon Bedrock]
-    C -->|Stores Results| F[(S3 Bucket)]
-    C -->|Sends Alerts| G[SNS Topics]
-    C -->|Logs Metrics| H[CloudWatch]
+    A[S3/Event/Manual Trigger] -->|Invokes| B[Lambda Handler]
+    B -->|Async| C[Data Quality Pipeline]
+    C --> D[Glue Catalog]
+    C --> E[Athena Query]
+    C --> F[Data Profiling]
+    C -->|Optional| G[Amazon Bedrock]
+    C --> H[Generate Report]
+    H -->|Store| I[(S3 Bucket)]
+    H -->|Notify| J[SNS Topics]
+    H -->|Metrics| K[CloudWatch]
     
     subgraph "AWS Services"
-        B[EventBridge]
-        C[Lambda]
+        B[Lambda]
         D[Glue Catalog]
-        E[Bedrock]
-        F[S3]
-        G[SNS]
-        H[CloudWatch]
+        E[Athena]
+        G[Bedrock Runtime]
+        I[S3]
+        J[SNS]
+        K[CloudWatch]
     end
     
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style F fill:#9cf,stroke:#333,stroke-width:2px
+    style A fill:#4CAF50,stroke:#333,stroke-width:2px
+    style C fill:#2196F3,stroke:#333,stroke-width:2px
+    style G fill:#9C27B0,stroke:#333,stroke-width:2px
+    style H fill:#FF9800,stroke:#333,stroke-width:2px
 ```
+
+## 🆕 What's New
+
+- **Async Lambda Handler**: Improved performance with async/await pattern
+- **Amazon Titan Integration**: Enhanced AI analysis using Amazon Titan foundation models
+- **Dynamic Report Loading**: Web UI now supports loading reports from S3
+- **Enhanced Error Handling**: Better error recovery and reporting
+- **Comprehensive Metrics**: Detailed CloudWatch metrics for monitoring
 
 ## 🚀 Quick Start
 
@@ -72,7 +87,26 @@ graph TD
 
 For manual deployment steps, see [MANUAL_STEPS.md](manual_steps.md)
 
-## Lambda Layer Deployment
+## 🛠️ Enhanced Lambda Architecture
+
+The solution now uses an async/await pattern for improved performance and reliability:
+
+1. **Synchronous Wrapper**
+   - Handles Lambda invocation
+   - Manages async event loop
+   - Provides consistent error handling
+
+2. **Async Core**
+   - Non-blocking I/O operations
+   - Concurrent execution of checks
+   - Better resource utilization
+
+3. **AI Analysis**
+   - Optional Amazon Titan model integration
+   - Configurable via environment variables
+   - Graceful degradation if Bedrock is unavailable
+
+## 📦 Lambda Layer Deployment
 
 This project uses AWS Lambda Layers to manage dependencies. The layer includes all required Python packages, keeping your Lambda deployment package small and efficient.
 
@@ -167,12 +201,13 @@ aws-data-quality-bots/
 |----------|-------------|---------|:--------:|
 | `S3_BUCKET` | S3 bucket for storing results | - | ✅ |
 | `SNS_TOPIC_ARN` | SNS topic ARN for alerts | - | ❌ |
-| `DEFAULT_DATABASE` | Default Glue database to check | "default" | ❌ |
-| `BEDROCK_REGION` | AWS region for Bedrock service | Same as Lambda | ❌ |
+| `GLUE_DATABASE` | Glue database name | - | ✅ |
+| `GLUE_TABLE` | Glue table name | - | ✅ |
+| `AWS_REGION` | AWS region for services | us-east-1 | ❌ |
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | "INFO" | ❌ |
-| `MAX_RETRY_ATTEMPTS` | Maximum retry attempts for Bedrock API | 3 | ❌ |
-| `BEDROCK_MODEL_ID` | Bedrock model ID to use | "anthropic.claude-3-sonnet-20240229-v1:0" | ❌ |
-| `ENABLE_AI_ANALYSIS` | Enable/disable AI analysis | true | ❌ |
+| `BEDROCK_ENABLED` | Enable Bedrock AI analysis | "false" | ❌ |
+| `BEDROCK_MODEL_ID` | Amazon Titan model ID | "amazon.titan-text-express-v1" | ❌ |
+| `MAX_RETRY_ATTEMPTS` | Max retry attempts for AWS API calls | 3 | ❌ |
 
 ### Terraform Variables
 
@@ -241,19 +276,71 @@ aws lambda invoke \
 3. **CloudWatch Dashboard**:
    Access the pre-configured dashboard through the AWS Console or via the URL output by Terraform.
 
-## 🤖 AI-Powered Analysis
+## 🤖 Enhanced AI-Powered Analysis
 
-The solution uses Amazon Bedrock to provide intelligent analysis of your data quality. The following agents work together:
+The solution now leverages Amazon Titan foundation models through Bedrock for advanced data quality insights:
 
-1. **Data Profiler**: Analyzes data structure and statistics
-2. **Rule Engine**: Applies custom data quality rules
-3. **Anomaly Detector**: Identifies unusual patterns
-4. **Root Cause Analyzer**: Determines potential causes of issues
-5. **Remediation Advisor**: Suggests fixes for identified problems
+### Key Features
 
-### Customizing AI Behavior
+1. **Intelligent Data Profiling**
+   - Automated schema analysis
+   - Statistical distribution detection
+   - Pattern recognition in data
 
-You can customize the behavior of the AI agents by modifying the system prompts in the `BedrockAgent` class in `lambda_function.py`.
+2. **Anomaly Detection**
+   - Identifies outliers and unusual patterns
+   - Detects data drift over time
+   - Flags potential data quality issues
+
+3. **Smart Recommendations**
+   - Suggests data quality rules
+   - Recommends data transformations
+   - Provides data cleaning guidance
+
+### Configuration
+
+Enable AI analysis by setting these environment variables:
+
+```bash
+BEDROCK_ENABLED=true
+BEDROCK_MODEL_ID=amazon.titan-text-express-v1  # or other Titan model
+```
+
+### Sample AI Insights
+
+The AI analysis provides human-readable insights such as:
+- Data distribution anomalies
+- Potential data quality issues
+- Schema recommendations
+- Data transformation suggestions
+
+### Web Dashboard
+
+Access the interactive web dashboard to view AI insights:
+
+```bash
+# After deployment, access the dashboard URL from CloudFormation outputs
+open https://your-cloudfront-url.com/?report=reports/your_db/your_table/latest/report.json
+```
+
+![Dashboard Preview](https://via.placeholder.com/800x400.png?text=Data+Quality+Dashboard+Preview)
+
+## 🚀 Getting Started with the Web Dashboard
+
+The solution includes a modern web interface for exploring data quality reports:
+
+### Features
+
+- **Dynamic Report Loading**: Load reports directly from S3
+- **Interactive Visualizations**: Charts for numeric data distributions
+- **AI Insights Panel**: View AI-generated recommendations
+- **Responsive Design**: Works on desktop and mobile devices
+
+### Usage
+
+1. Deploy the solution using the provided CloudFormation template
+2. Upload reports to the S3 bucket in the format: `s3://{bucket}/reports/{database}/{table}/{timestamp}/report.json`
+3. Access the dashboard and enter the report path or use URL parameters
 
 ## 🔄 CI/CD Pipeline
 
