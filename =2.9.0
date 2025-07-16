@@ -1,0 +1,2 @@
+Requirement already satisfied: python-dateutil in /private/var/folders/_l/_gfqk5bj7_x5qh3mcl89ktl00000gn/T/tmpu191b1wq/venv/lib/python3.9/site-packages (2.9.0.post0)
+Requirement already satisfied: six>=1.5 in /private/var/folders/_l/_gfqk5bj7_x5qh3mcl89ktl00000gn/T/tmpu191b1wq/venv/lib/python3.9/site-packages (from python-dateutil) (1.17.0)

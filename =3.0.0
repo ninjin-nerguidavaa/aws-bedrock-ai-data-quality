@@ -1,0 +1,5 @@
+Collecting awswrangler
+  Using cached awswrangler-3.12.1-py3-none-any.whl.metadata (17 kB)
+Using cached awswrangler-3.12.1-py3-none-any.whl (379 kB)
+Installing collected packages: awswrangler
+Successfully installed awswrangler-3.12.1

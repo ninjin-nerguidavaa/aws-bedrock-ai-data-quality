@@ -1,0 +1,5 @@
+Collecting pyathena
+  Using cached pyathena-3.14.1-py3-none-any.whl.metadata (6.3 kB)
+Using cached pyathena-3.14.1-py3-none-any.whl (76 kB)
+Installing collected packages: pyathena
+Successfully installed pyathena-3.14.1

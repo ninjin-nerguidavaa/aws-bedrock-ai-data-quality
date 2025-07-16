@@ -208,26 +208,91 @@ The AWS Data Quality Bots solution consists of the following components:
 
 7. Click **Deploy** to save your changes
 
-## Step 5: Create Glue Database and Table
+## Step 5: Set Up AWS Glue
+
+### 5.1 Create a Glue Database
 
 1. Navigate to **AWS Glue** > **Databases** > **Add database**
    - **Database name**: `data_quality_db`
+   - **Description**: Database for data quality check tables
    - Click **Create database**
 
-2. Go to **Tables** > **Add table**
-   - **Table name**: `customers`
-   - **Database**: `data_quality_db`
-   - Click **Next**
-   - **Data store**: S3
-   - **Location of dataset**: `s3://data-quality-bots-<your-account-id>-<region>/input/customers/`
-   - **Data format**: CSV
-   - **Has column headers**: Yes
-   - **Delimiter**: Comma (,)
-   - Click **Next**
-   - Click **Next** (skip classification)
-   - Review schema and click **Finish**
+### 5.2 Set Up Glue Crawler
 
-## Step 6: Set Up EventBridge Rule
+1. Go to **AWS Glue** > **Crawlers** > **Add crawler**
+   - **Crawler name**: `data-quality-crawler`
+   - Click **Next**
+
+2. **Choose data sources and classifiers**:
+   - Select **S3**
+   - **Include path**: `s3://data-quality-bots-<your-account-id>-<region>/input/customers/`
+   - Click **Next**
+
+   > **Note**: The crawler will create a table named `customers` based on the last folder in the path. For multiple tables, you would create separate folders (e.g., `customers/`, `orders/`) under the `input/` directory.
+
+3. **Add another data source**:
+   - Select **No**
+   - Click **Next**
+
+4. **Configure security settings**:
+   - **IAM role**: Select an existing IAM role with Glue permissions or create a new one
+   - Click **Next**
+
+5. **Set output and scheduling**:
+   - **Database**: `data_quality_db`
+   - **Table name prefix**: (leave blank)
+   - **Crawler schedule**: Select **Run on demand**
+   - Click **Next**
+
+6. **Review and create**:
+   - Verify all settings
+   - Click **Finish**
+
+7. **Run the crawler**:
+   - Select the crawler
+   - Click **Run crawler**
+   - Wait for the status to change to **Ready**
+
+### 5.3 Verify Table Creation
+
+1. Go to **AWS Glue** > **Tables**
+2. Verify you see your table (e.g., `customers`)
+3. Click on the table to verify schema detection
+
+## Step 5.5: Set Up Athena Workgroup
+
+1. Navigate to **Amazon Athena**
+2. In the query editor, select **Workgroup: primary** > **Manage workgroups**
+3. Click **Create workgroup**
+   - **Name**: `data-quality-workgroup`
+   - **Description**: Workgroup for data quality queries
+   - Click **Create workgroup**
+
+4. **Configure workgroup settings**:
+   - Select the workgroup
+   - Click **Edit**
+   - **Query result location**: `s3://data-quality-bots-<your-account-id>-<region>/athena-results/`
+   - **Encryption**: Select **SSE-S3** (or your preferred encryption)
+   - **Override client-side settings**: Check this option
+   - Click **Save changes**
+
+5. **Set as default**:
+   - In the query editor, select the new workgroup from the dropdown
+   - Click **Save as default**
+
+## Step 6: Configure Lambda Environment Variables
+
+1. Go to **AWS Lambda** > **Functions** > Select your function
+2. Click **Configuration** > **Environment variables**
+3. Add the following variables:
+   - `GLUE_DATABASE`: `data_quality_db`
+   - `GLUE_TABLE`: `customers`
+   - `S3_BUCKET`: `data-quality-bots-<your-account-id>-<region>`
+   - `ATHENA_WORKGROUP`: `data-quality-workgroup`
+   - `SNS_TOPIC_ARN`: (your SNS topic ARN if using notifications)
+4. Click **Save**
+
+## Step 7: Set Up EventBridge Rule
 
 1. Navigate to **EventBridge** > **Rules** > **Create rule**
    - **Name**: `s3-data-arrival-rule`
@@ -299,6 +364,22 @@ The AWS Data Quality Bots solution consists of the following components:
    - Error rates
    - Execution duration
    - S3 object counts
+
+## Common Issues and Solutions
+
+### Athena Query Failing
+- **Symptom**: Queries fail with permission errors
+- **Solution**:
+  1. Verify the IAM role has `athena:StartQueryExecution` and `glue:GetTable` permissions
+  2. Check the S3 bucket policy allows Athena to write results
+  3. Ensure the workgroup's query result location is correctly set
+
+### Glue Crawler Not Detecting Schema
+- **Symptom**: Crawler runs but doesn't detect tables
+- **Solution**:
+  1. Verify the S3 path is correct and accessible
+  2. Check if files are in the expected format
+  3. Ensure the IAM role has `s3:ListBucket` and `s3:GetObject` permissions
 
 ## Troubleshooting
 

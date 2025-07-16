@@ -9,7 +9,7 @@ A production-ready, AI-powered solution for autonomous data quality monitoring, 
 - **Flexible Data Sources**: Works with various data formats in S3
 - **Detailed Reporting**: Generates comprehensive data quality reports
 - **Serverless Architecture**: Built on AWS Lambda, Glue, and EventBridge
-- **Efficient Dependencies**: Uses Lambda Layers for better package management
+- **Efficient Dependencies**: Utilizes AWS-managed AWSSDKPandas-Python39 layer for reliable dependency management
 - **Easy Deployment**: Simple setup with Terraform or manual AWS console configuration
 - **Extensible Design**: Easy to add custom validation rules and data sources
 
