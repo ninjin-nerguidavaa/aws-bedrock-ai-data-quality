@@ -20,8 +20,7 @@ A production-ready, AI-powered solution for autonomous data quality monitoring, 
 ```mermaid
 graph TD
     %% Data Flow
-    A[Data Source
-    (S3/Glue)] -->|Profiles| B[Data Quality Pipeline]
+    A["Data Source (S3/Glue)"] -->|Profiles| B[Data Quality Pipeline]
     B --> C[Quality Analysis]
     C -->|Uses| D[Amazon Bedrock]
     C -->|Generates| E[Quality Report]
