@@ -19,31 +19,53 @@ A production-ready, AI-powered solution for autonomous data quality monitoring, 
 
 ```mermaid
 graph TD
-    A[S3/Event/Manual Trigger] -->|Invokes| B[Lambda Handler]
-    B -->|Async| C[Data Quality Pipeline]
-    C --> D[Glue Catalog]
-    C --> E[Athena Query]
-    C --> F[Data Profiling]
-    C -->|Optional| G[Amazon Bedrock]
-    C --> H[Generate Report]
-    H -->|Store| I[(S3 Bucket)]
-    H -->|Notify| J[SNS Topics]
-    H -->|Metrics| K[CloudWatch]
+    %% Data Flow
+    A[Data Source
+    (S3/Glue)] -->|Profiles| B[Data Quality Pipeline]
+    B --> C[Quality Analysis]
+    C -->|Uses| D[Amazon Bedrock]
+    C -->|Generates| E[Quality Report]
+    E -->|Stores in| F[(S3 Bucket)]
     
-    subgraph "AWS Services"
-        B[Lambda]
-        D[Glue Catalog]
-        E[Athena]
-        G[Bedrock Runtime]
-        I[S3]
-        J[SNS]
-        K[CloudWatch]
+    %% User Interaction
+    G[User] -->|Accesses| H[Web Dashboard]
+    H -->|Reads| F
+    H -->|Visualizes| I[Charts & Metrics]
+    H -->|Shows| J[AI Insights]
+    
+    %% Notifications
+    E -->|Sends| K[SNS Alerts]
+    E -->|Logs| L[CloudWatch]
+    
+    subgraph "AWS Infrastructure"
+        B[Data Quality Pipeline]
+        D[Amazon Bedrock]
+        F[(S3 Bucket)]
+        K[SNS]
+        L[CloudWatch]
     end
     
+    subgraph "Web Application"
+        H[Web Dashboard]
+        I[Interactive Charts]
+        J[AI Insights]
+    end
+    
+    %% Styling
+    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:white
+    classDef app fill:#00A1F1,stroke:#333,stroke-width:2px,color:white
+    classDef storage fill:#6AA84F,stroke:#333,stroke-width:2px,color:white
+    classDef process fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white
+    
+    class A,D,K,L aws;
+    class H,I,J app;
+    class F storage;
+    class B,C,E process;
+    
     style A fill:#4CAF50,stroke:#333,stroke-width:2px
-    style C fill:#2196F3,stroke:#333,stroke-width:2px
-    style G fill:#9C27B0,stroke:#333,stroke-width:2px
-    style H fill:#FF9800,stroke:#333,stroke-width:2px
+    style D fill:#9C27B0,stroke:#333,stroke-width:2px
+    style H fill:#2196F3,stroke:#333,stroke-width:2px
+    style E fill:#FF9800,stroke:#333,stroke-width:2px
 ```
 
 ## 🆕 What's New
@@ -105,6 +127,104 @@ The solution now uses an async/await pattern for improved performance and reliab
    - Optional Amazon Titan model integration
    - Configurable via environment variables
    - Graceful degradation if Bedrock is unavailable
+
+## 📊 Web Dashboard
+
+The solution includes a modern, interactive web dashboard for visualizing data quality reports. The dashboard is a static HTML/JS application that can be hosted on S3 and CloudFront.
+
+### 🎨 Dashboard Features
+
+- **Real-time Data Visualization**: Interactive charts and metrics
+- **AI-Powered Insights**: Displays AI-generated recommendations
+- **Responsive Design**: Works on desktop and mobile devices
+- **Dynamic Report Loading**: Load reports directly from S3
+- **Column Statistics**: Detailed profiling of each column
+- **Data Distribution**: Visual representation of numeric data
+
+### 🚀 Quick Start
+
+1. **Deploy the Dashboard**
+   ```bash
+   # Upload dashboard files to S3
+   aws s3 sync html/ s3://your-bucket/dashboard/ --acl public-read
+   
+   # Enable static website hosting on the S3 bucket
+   aws s3 website s3://your-bucket/ --index-document index.html
+   ```
+
+2. **Access the Dashboard**
+   ```
+   http://your-bucket.s3-website-<region>.amazonaws.com/dashboard/
+   ```
+
+### 🔗 Loading Reports
+
+The dashboard can load reports in two ways:
+
+1. **URL Parameter**:
+   ```
+   /index.html?report=reports/your_db/your_table/20250101_120000/report.json
+   ```
+
+2. **Interactive Selector**:
+   - Use the file browser to select a report
+   - Recent reports are cached in local storage
+
+### 🎛️ Configuration
+
+Customize the dashboard by editing `html/config.js`:
+
+```javascript
+const CONFIG = {
+  // Default S3 bucket for reports
+  defaultBucket: 'your-bucket-name',
+  
+  // Enable/disable features
+  features: {
+    darkMode: true,
+    saveHistory: true,
+    autoRefresh: false
+  },
+  
+  // Chart configuration
+  chart: {
+    colors: ['#4f46e5', '#7c3aed', '#a78bfa'],
+    maxBars: 15
+  }
+};
+```
+
+### 📱 Mobile Support
+
+The dashboard is fully responsive and works on mobile devices:
+- Swipe to navigate between sections
+- Touch-friendly controls
+- Optimized for smaller screens
+
+### 🔒 Security Considerations
+
+- The dashboard is a static website with no backend
+- All data processing happens in the browser
+- Uses CORS to fetch reports from S3
+- No credentials are stored in the browser
+
+### 🛠️ Development
+
+To modify the dashboard:
+
+1. Install dependencies:
+   ```bash
+   cd html
+   npm install chart.js
+   ```
+
+2. Make your changes to `index.html` and `js/app.js`
+
+3. Test locally:
+   ```bash
+   python3 -m http.server 8000
+   ```
+   Then open `http://localhost:8000` in your browser
 
 ## 📦 Lambda Layer Deployment
 
