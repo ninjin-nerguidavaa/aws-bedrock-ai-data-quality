@@ -55,14 +55,23 @@ graph TD
     end
     
     %% Styling
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:white
-    classDef app fill:#00A1F1,stroke:#333,stroke-width:2px,color:white
-    classDef storage fill:#6AA84F,stroke:#333,stroke-width:2px,color:white
-    classDef process fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white
-    
-    class A,D,K,L aws;
-    class H,I,J app;
-    class F storage;
+    classDef aws fill:#FF9900,color:#000,stroke:#000,stroke-width:1px;
+    classDef web fill:#00A1C9,color:#fff,stroke:#000,stroke-width:1px;
+    class B,D,F,K,L aws;
+    class H,I,J,M,N web;
+```
+
+## 📊 Dashboard Preview
+
+Here's a preview of the interactive dashboard that provides insights into your data quality:
+
+![Data Quality Dashboard](./docs/dashboard_image.png)
+
+The dashboard features:
+- **Tabbed Interface**: Switch between Data Quality and Anomaly Detection views
+- **Interactive Visualizations**: Explore data distributions and statistics
+- **AI-Powered Insights**: Get automated analysis and recommendations
+- **Confidence Scoring**: Understand the reliability of the analysis
     class B,C,E process;
     
     style A fill:#4CAF50,stroke:#333,stroke-width:2px
