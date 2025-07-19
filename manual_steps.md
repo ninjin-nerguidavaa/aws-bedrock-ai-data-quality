@@ -13,8 +13,10 @@ This document provides comprehensive, step-by-step instructions for manually dep
 8. [Step 6: Configure EventBridge Rule](#step-6-configure-eventbridge-rule)
 9. [Step 7: Test the Deployment](#step-7-test-the-deployment)
 10. [Step 8: Set Up Monitoring (Optional)](#step-8-set-up-monitoring-optional)
-11. [Troubleshooting](#troubleshooting)
-12. [Maintenance and Operations](#maintenance-and-operations)
+11. [Step 9: Deploy the Dashboard](#step-9-deploy-the-dashboard)
+12. [Step 10: Configure CloudFront (Recommended for Production)](#step-10-configure-cloudfront-recommended-for-production)
+13. [Troubleshooting](#troubleshooting)
+14. [Maintenance and Operations](#maintenance-and-operations)
 
 ## Prerequisites
 
@@ -24,30 +26,32 @@ Before you begin, ensure you have the following:
 - AWS Account with AdministratorAccess or equivalent permissions
 - AWS CLI configured with credentials
 - Default VPC and subnets in your preferred region
+- Access to Amazon Bedrock with Claude 2.1 model enabled
+- IAM permissions for Bedrock:InvokeModel and Bedrock:InvokeModelWithResponseStream
 
 ### Local Development Environment
 - Python 3.8 or later
 - pip (Python package manager)
 - Git (for cloning the repository)
-- AWS CLI v2
-
-### Project Files
-- Clone the repository:
-  ```bash
-  git clone https://github.com/your-org/aws-data-quality-bots.git
-  cd aws-data-quality-bots
-  ```
-- Sample test data is available in the `test_data/` directory
 
 ## Architecture Overview
 
 The AWS Data Quality Bots solution consists of the following components:
 
 1. **S3 Buckets**: Store input data, processed results, and reports
-2. **AWS Lambda**: Serverless function that processes data quality checks
+2. **AWS Lambda**: Serverless function that processes data quality checks using Claude 2.1
 3. **AWS Glue**: Data catalog and ETL service for data discovery and preparation
-4. **Amazon Bedrock**: AI service for intelligent data quality analysis
+4. **Amazon Bedrock**: AI service with Claude 2.1 for intelligent data quality and anomaly analysis
 5. **Amazon EventBridge**: Triggers the Lambda function on S3 upload events
+6. **Static Website Hosting**: S3 + CloudFront for the interactive dashboard
+
+### Data Flow
+
+1. Data is uploaded to the S3 input bucket
+2. EventBridge triggers the Lambda function
+3. Lambda processes the data and sends it to Claude 2.1 via Bedrock
+4. Analysis results are stored in the output S3 bucket
+5. The web dashboard displays the results with interactive visualizations
 6. **Amazon SNS**: Sends notifications for data quality issues
 7. **Amazon CloudWatch**: Monitors and logs all activities
 
@@ -104,14 +108,17 @@ The AWS Data Quality Bots solution consists of the following components:
    - `AWSGlueConsoleFullAccess` (or more restricted permissions)
    - `AmazonAthenaFullAccess` (or more restricted permissions)
    - `AmazonBedrockFullAccess` (or more restricted permissions)
+   - `AmazonSNSFullAccess` (if using notifications)
 4. Click **Next**
 5. Role name: `DataQualityLambdaRole`
 6. Click **Create role**
 
-### Create IAM Policy for Bedrock Access
+### Update IAM Role for Lambda
 
-1. In IAM, go to **Policies** > **Create policy**
-2. Select the **JSON** tab and paste:
+1. Navigate to **IAM** > **Roles**
+2. Find and select your Lambda execution role
+3. Click **Add permissions** > **Create inline policy**
+4. Use the JSON tab and add the following policy:
    ```json
    {
        "Version": "2012-10-17",
@@ -119,94 +126,69 @@ The AWS Data Quality Bots solution consists of the following components:
            {
                "Effect": "Allow",
                "Action": [
-                   "bedrock:InvokeModel",
-                   "bedrock:InvokeModelWithResponseStream",
-                   "bedrock:ListFoundationModels"
+                   "bedrock:InvokeAgent",
+                   "bedrock:RetrieveAndGenerate",
+                   "bedrock:Retrieve"
+               ],
+               "Resource": [
+                   "arn:aws:bedrock:*::agent/*",
+                   "arn:aws:bedrock:*::knowledge-base/*"
+               ]
+           },
+           {
+               "Effect": "Allow",
+               "Action": [
+                   "bedrock:ListAgentKnowledgeBases",
+                   "bedrock:ListAgents",
+                   "bedrock:ListAgentAliases"
                ],
                "Resource": "*"
            }
        ]
    }
    ```
-3. Click **Next: Tags** > **Next: Review**
-4. Name: `BedrockAccessPolicy`
-5. Click **Create policy**
-6. Attach this policy to your `DataQualityLambdaRole`
+5. Click **Review policy** > **Name**: `BedrockAccessPolicy` > **Create policy**
 
 ## Step 4: Deploy Lambda Function
 
-### Create Lambda Layer
-
-1. **Build the Layer Package**:
+### Package the Lambda function
    ```bash
-   cd aws-data-quality-bots
-   python3 scripts/build_layer.py
+   # Install dependencies
+   pip install -r requirements.txt -t ./package
+   
+   # Create deployment package
+   cd package
+   zip -r ../lambda_function.zip .
+   cd ..
+   zip -g lambda_function.zip lambda_function.py
    ```
-   This will create the layer package at `build/layer/data-quality-deps.zip`
 
-2. **Upload to AWS**:
-   - Go to AWS Lambda Console → Layers → Create Layer
-   - Configure the layer:
-     - Name: `data-quality-deps`
-     - Upload the ZIP file: `build/layer/data-quality-deps.zip`
-     - Select Python 3.9 as the compatible runtime
-     - Add Python 3.9 as a compatible architecture (x86_64)
-   - Click **Create** and note the Layer ARN
+2. **Create the Lambda function**:
+   - Go to AWS Lambda console
+   - Click "Create function"
+   - Select "Author from scratch"
+   - Enter function name: `data-quality-checker`
+   - Runtime: Python 3.9
+   - Architecture: x86_64
+   - Click "Create function"
 
-### Create Lambda Function
+3. **Upload the deployment package**:
+   - In the function configuration, click "Upload from" > ".zip file"
+   - Select the `lambda_function.zip` file
+   - Click "Save"
 
-1. Navigate to **Lambda** > **Create function**
-2. Select **Author from scratch**
-3. Configure basic settings:
-   - **Function name**: `data-quality-processor`
-   - **Runtime**: Python 3.9
-   - **Architecture**: x86_64
-   - **Permissions**: Use an existing role (select the role created in Step 3)
-
-### Add Layer to Lambda Function
-
-1. In your Lambda function, go to the **Layers** section
-2. Click **Add a layer**
-3. Select **Custom layers**
-4. Choose the `data-quality-deps` layer you created
-5. Select the latest version
-6. Click **Add**
-
-3. **Upload Lambda Code**:
-   - In the **Code** tab, click **Upload from** and select **.zip file**
-   - Upload a zip file containing only your Lambda function code (without dependencies):
-     ```bash
-     cd aws-data-quality-bots/lambda_functions/data_quality_checker
-     zip -r ../../../lambda_code.zip . -x "*__pycache__*"
-     ```
-   - Or use the inline editor to paste the code from `lambda_function.py`
-
-4. **Configure Basic Settings**:
-   - **Handler**: `lambda_function.lambda_handler`
-   - **Runtime**: Python 3.9
-   - **Architecture**: x86_64
-   - **Memory**: 1024 MB
-   - **Timeout**: 5 minutes
-   - **Execution role**: Choose the IAM role created earlier
-
-5. **Add Environment Variables**:
-   - `S3_BUCKET`: `data-quality-bots-<your-account-id>-<region>`
-   - `S3_INPUT_PREFIX`: `input/`
-   - `S3_OUTPUT_PREFIX`: `output/`
-   - `S3_REPORT_PREFIX`: `reports/`
-   - `GLUE_DATABASE`: `data_quality_db`
-   - `GLUE_TABLE`: `customers`
-   - `ATHENA_OUTPUT_LOCATION`: `s3://data-quality-bots-<your-account-id>-<region>/athena-results/`
-
-6. **Add the Lambda Layer**:
-   - In the Lambda function page, scroll down to the **Layers** section
-   - Click **Add a layer**
-   - Select **Custom layers**
-   - Choose the `data-quality-deps` layer you created
-   - Select the latest version
-   - Click **Add**
-
-7. Click **Deploy** to save your changes
+4. **Configure environment variables**:
+   - In the function configuration, go to "Configuration" > "Environment variables"
+   - Add the following variables:
+     - `S3_BUCKET`: Your S3 bucket name
+     - `GLUE_DATABASE`: Your Glue database name
+     - `GLUE_TABLE`: Your Glue table name
+     - `AWS_REGION`: Your AWS region
+     - `LOG_LEVEL`: "INFO"
+     - `BEDROCK_ENABLED`: "true"
+     - `BEDROCK_MODEL_ID`: "anthropic.claude-v2:1"
+     - `MAX_RETRY_ATTEMPTS`: "3"
+     - `CIRCUIT_BREAKER_TIMEOUT`: "300"
 
 ## Step 5: Set Up AWS Glue
 
@@ -259,40 +241,7 @@ The AWS Data Quality Bots solution consists of the following components:
 2. Verify you see your table (e.g., `customers`)
 3. Click on the table to verify schema detection
 
-## Step 5.5: Set Up Athena Workgroup
-
-1. Navigate to **Amazon Athena**
-2. In the query editor, select **Workgroup: primary** > **Manage workgroups**
-3. Click **Create workgroup**
-   - **Name**: `data-quality-workgroup`
-   - **Description**: Workgroup for data quality queries
-   - Click **Create workgroup**
-
-4. **Configure workgroup settings**:
-   - Select the workgroup
-   - Click **Edit**
-   - **Query result location**: `s3://data-quality-bots-<your-account-id>-<region>/athena-results/`
-   - **Encryption**: Select **SSE-S3** (or your preferred encryption)
-   - **Override client-side settings**: Check this option
-   - Click **Save changes**
-
-5. **Set as default**:
-   - In the query editor, select the new workgroup from the dropdown
-   - Click **Save as default**
-
-## Step 6: Configure Lambda Environment Variables
-
-1. Go to **AWS Lambda** > **Functions** > Select your function
-2. Click **Configuration** > **Environment variables**
-3. Add the following variables:
-   - `GLUE_DATABASE`: `data_quality_db`
-   - `GLUE_TABLE`: `customers`
-   - `S3_BUCKET`: `data-quality-bots-<your-account-id>-<region>`
-   - `ATHENA_WORKGROUP`: `data-quality-workgroup`
-   - `SNS_TOPIC_ARN`: (your SNS topic ARN if using notifications)
-4. Click **Save**
-
-## Step 7: Set Up EventBridge Rule
+## Step 6: Configure EventBridge Rule
 
 1. Navigate to **EventBridge** > **Rules** > **Create rule**
    - **Name**: `s3-data-arrival-rule`
@@ -328,19 +277,32 @@ The AWS Data Quality Bots solution consists of the following components:
 4. **Configure tags** (optional) > **Next**
 5. **Review and create** > **Create rule**
 
-## Step 7: Test the Setup
+## Step 7: Test the Deployment
 
-1. Upload a test file to trigger the Lambda:
+### Test the Titan Agent Directly
+
+1. Navigate to **Amazon Bedrock** > **Agents**
+2. Select your `DataQualityAgent`
+3. Go to the **Test** tab
+4. Enter a test prompt: "Analyze this customer data for quality issues"
+5. Verify the agent responds with appropriate analysis
+
+### End-to-End Test
+
+1. Upload a test file to trigger the Lambda function:
    ```bash
-   aws s3 cp test_data/sample_customers.csv s3://data-quality-bots-<your-account-id>-<region>/input/customers/sample_test.csv
+   aws s3 cp test_data/sample_customers.csv s3://your-bucket-name/input/customers/
    ```
 
-2. Monitor the Lambda function:
-   - Go to **Lambda** > **Functions** > **data-quality-checker** > **Monitor** > **Logs**
+2. **Monitor Execution**:
+   - Check CloudWatch logs for the Lambda function
+   - Look for logs related to Bedrock Agent invocation
+   - Verify the agent's analysis is included in the output
 
-3. Check the output in S3:
-   - Reports: `s3://data-quality-bots-<your-account-id>-<region>/reports/`
-   - Processed data: `s3://data-quality-bots-<your-account-id>-<region>/output/`
+3. **Verify Output**:
+   - Check the S3 reports folder for the analysis output
+   - The report should include both data quality metrics and AI-powered insights
+   - Look for the `ai_analysis` section in the report JSON
 
 ## Step 8: Set Up SNS Notifications (Optional)
 
@@ -383,20 +345,27 @@ The AWS Data Quality Bots solution consists of the following components:
 
 ## Troubleshooting
 
-### Common Issues and Solutions
+### Common Issues
 
-1. **Lambda Permissions**:
-   - Verify the execution role has all necessary permissions
-   - Check CloudWatch Logs for errors
+1. **Titan Agent Connection Issues**:
+   - Verify the agent ID and alias ID are correct
+   - Check that the agent is in the `PREPARED` or `UPDATING` state
+   - Ensure the Lambda's IAM role has `bedrock:InvokeAgent` permission
 
-2. **S3 Permissions**:
-   - Ensure the bucket policy allows the Lambda role to read/write
-   - Check for any S3 bucket encryption issues
+2. **Lambda Timeout**:
+   - Increase the timeout in Lambda configuration (up to 15 minutes)
+   - For large datasets, consider processing in smaller batches
+   - Enable active tracing in Lambda for better visibility
 
-3. **Glue/Athena**:
-   - Verify the Glue table schema matches your CSV
-   - Check Athena query results for data quality issues
+3. **Permission Issues**:
+   - Verify IAM roles have the correct Bedrock permissions
+   - Check for resource-based policies on the Bedrock agent
+   - Ensure the agent's service role has access to required resources
 
+4. **Agent Response Issues**:
+   - Check the agent's CloudWatch logs for errors
+   - Verify the input format matches the API schema
+   - Test the agent directly in the Bedrock console to isolate issues
 4. **Bedrock Access**:
    - Ensure the region supports Bedrock
    - Verify the model ID is correct and accessible

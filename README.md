@@ -6,10 +6,12 @@ A production-ready, AI-powered solution for autonomous data quality monitoring, 
 
 ## 🚀 Features
 
-- **AI-Powered Analysis**: Leverages Amazon Titan models through Bedrock for intelligent data quality insights and recommendations
+- **AI-Powered Analysis**: Leverages Amazon Bedrock's Claude 2.1 model for intelligent data quality insights and recommendations
 - **Automated Data Quality Checks**: Implements comprehensive validation rules for data quality
+- **Anomaly Detection**: Advanced AI-powered anomaly detection for numeric and categorical data
 - **Flexible Data Sources**: Works with various data formats in S3
-- **Detailed Reporting**: Generates comprehensive data quality reports
+- **Interactive Dashboard**: Modern web interface with tabbed views for data quality and anomaly detection
+- **Detailed Reporting**: Generates comprehensive data quality reports with confidence scores
 - **Serverless Architecture**: Built on AWS Lambda (with async processing), Glue, and EventBridge
 - **Efficient Dependencies**: Utilizes AWS-managed AWSSDKPandas-Python39 layer for reliable dependency management
 - **Easy Deployment**: Simple setup with Terraform or manual AWS console configuration
@@ -22,15 +24,15 @@ graph TD
     %% Data Flow
     A["Data Source (S3/Glue)"] -->|Profiles| B[Data Quality Pipeline]
     B --> C[Quality Analysis]
-    C -->|Uses| D[Amazon Bedrock]
+    C -->|Uses| D[Amazon Bedrock Claude 2.1]
     C -->|Generates| E[Quality Report]
     E -->|Stores in| F[(S3 Bucket)]
     
     %% User Interaction
     G[User] -->|Accesses| H[Web Dashboard]
     H -->|Reads| F
-    H -->|Visualizes| I[Charts & Metrics]
-    H -->|Shows| J[AI Insights]
+    H -->|Visualizes| I[Interactive Charts]
+    H -->|Shows| J[AI Insights & Anomaly Detection]
     
     %% Notifications
     E -->|Sends| K[SNS Alerts]
@@ -47,7 +49,9 @@ graph TD
     subgraph "Web Application"
         H[Web Dashboard]
         I[Interactive Charts]
-        J[AI Insights]
+        J[AI Insights & Anomaly Detection]
+        M[Tabbed Interface]
+        N[Confidence Scores]
     end
     
     %% Styling
@@ -324,7 +328,8 @@ aws-data-quality-bots/
 | `GLUE_TABLE` | Glue table name | - | ✅ |
 | `AWS_REGION` | AWS region for services | us-east-1 | ❌ |
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | "INFO" | ❌ |
-| `BEDROCK_ENABLED` | Enable Bedrock AI analysis | "false" | ❌ |
+| `BEDROCK_ENABLED` | Enable Bedrock AI analysis | "true" | ❌ |
+| `BEDROCK_MODEL_ID` | Bedrock model ID (e.g., anthropic.claude-v2:1) | "anthropic.claude-v2:1" | ❌ |
 | `BEDROCK_MODEL_ID` | Amazon Titan model ID | "amazon.titan-text-express-v1" | ❌ |
 | `MAX_RETRY_ATTEMPTS` | Max retry attempts for AWS API calls | 3 | ❌ |
 

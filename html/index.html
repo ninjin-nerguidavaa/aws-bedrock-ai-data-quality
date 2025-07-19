@@ -96,11 +96,47 @@
             background-color: #fee2e2;
             color: #991b1b;
         }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 15px;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+            margin-right: 5px;
+        }
+        
+        .tab-button.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
         .ai-insights {
-            background-color: #f0f9ff;
-            border-left: 4px solid #0ea5e9;
+            background-color: #f8fafc;
             padding: 15px;
-            margin: 15px 0;
+            border-radius: 6px;
+            margin-top: 10px;
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .insight-section {
+            margin-bottom: 15px;
             border-radius: 0 4px 4px 0;
         }
         .ai-insights h3 {
@@ -164,9 +200,23 @@
             </div>
 
             <div class="card">
-                <h2 class="section-title">AI-Powered Insights</h2>
-                <div id="aiInsights" class="ai-insights">
-                    <p>Loading AI insights...</p>
+                <div class="tabs">
+                    <button class="tab-button active" onclick="switchTab('data-quality')">Data Quality</button>
+                    <button class="tab-button" onclick="switchTab('anomaly-detection')">Anomaly Detection</button>
+                </div>
+                
+                <div id="data-quality-tab" class="tab-content active">
+                    <h2 class="section-title">Data Quality Analysis</h2>
+                    <div id="dataQualityInsights" class="ai-insights">
+                        <p>Loading data quality insights...</p>
+                    </div>
+                </div>
+                
+                <div id="anomaly-detection-tab" class="tab-content">
+                    <h2 class="section-title">Anomaly Detection</h2>
+                    <div id="anomalyDetectionInsights" class="ai-insights">
+                        <p>Loading anomaly detection insights...</p>
+                    </div>
                 </div>
             </div>
 
@@ -203,7 +253,7 @@
         
         // Get the report path from the URL or use the default
         const urlParams = new URLSearchParams(window.location.search);
-        const reportPath = urlParams.get('report') || 'reports/data_quality_db/customers/20250716_023638/report.json';
+        const reportPath = urlParams.get('report') || 'reports/data_quality_db/customers/20250719_165417/report.json';
         const S3_URL = `https://${BUCKET_NAME}.s3.amazonaws.com/${reportPath}`;
 
         // Function to format numbers
@@ -233,12 +283,34 @@
             Object.entries(columns).forEach(([colName, colData]) => {
                 const row = document.createElement('tr');
                 
-                // Format stats
+                // Format stats based on data type
                 let stats = [];
-                if (colData.stats) {
-                    if (colData.stats.min !== undefined) stats.push(`Min: ${colData.stats.min}`);
-                    if (colData.stats.max !== undefined) stats.push(`Max: ${colData.stats.max}`);
-                    if (colData.stats.mean !== undefined) stats.push(`Mean: ${colData.stats.mean.toFixed(2)}`);
+                
+                // Numeric stats
+                if (typeof colData.mean === 'number') {
+                    stats.push(`Mean: ${colData.mean.toFixed(2)}`);
+                }
+                if (typeof colData.min === 'number') {
+                    stats.push(`Min: ${colData.min}`);
+                }
+                if (typeof colData.max === 'number') {
+                    stats.push(`Max: ${colData.max}`);
+                }
+                
+                // String stats
+                if (colData.avg_length) {
+                    stats.push(`Avg Len: ${colData.avg_length.toFixed(1)}`);
+                }
+                if (colData.unique_count) {
+                    stats.push(`Unique: ${colData.unique_count}`);
+                }
+                
+                // Boolean stats
+                if (colData.true_count !== undefined) {
+                    stats.push(`True: ${colData.true_count}`);
+                }
+                if (colData.false_count !== undefined) {
+                    stats.push(`False: ${colData.false_count}`);
                 }
 
                 row.innerHTML = `
@@ -256,10 +328,13 @@
         // Function to render numeric data chart
         function renderNumericChart(columns) {
             const numericColumns = Object.entries(columns)
-                .filter(([_, colData]) => colData.stats && colData.stats.mean !== undefined)
+                .filter(([_, colData]) => typeof colData.mean === 'number')
                 .map(([colName, colData]) => ({
                     name: colName,
-                    ...colData.stats
+                    mean: colData.mean,
+                    min: colData.min,
+                    max: colData.max,
+                    std: colData.std
                 }));
 
             if (numericColumns.length === 0) {
@@ -313,28 +388,89 @@
             });
         }
 
+        // Function to switch between tabs
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab content and activate button
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            document.querySelector(`.tab-button[onclick*="${tabName}"]`).classList.add('active');
+        }
+        
         // Function to render AI insights
-        function renderAIInsights(insights) {
-            if (!insights) {
-                document.getElementById('aiInsights').innerHTML = '<p>No AI insights available.</p>';
+        function renderAIInsights(analysis, type = 'data_quality') {
+            const containerId = type === 'data_quality' ? 'dataQualityInsights' : 'anomalyDetectionInsights';
+            
+            if (!analysis || analysis.status !== 'success') {
+                document.getElementById(containerId).innerHTML = 
+                    `<p>No ${type.replace('_', ' ')} insights available.</p>`;
                 return;
             }
-
-            // Split insights into sections
-            const sections = insights.split(/\d+\.\s+/).filter(section => section.trim());
             
-            let html = sections.map((section, index) => {
-                const title = section.split(':')[0].trim();
-                const content = section.substring(section.indexOf(':') + 1).trim();
-                return `
-                    <div style="margin-bottom: ${index < sections.length - 1 ? '20px' : '0'};">
-                        <h3 style="color: #0369a1; margin-top: 0;">${title}</h3>
-                        <p>${content.replace(/\n/g, '<br>')}</p>
+            const insights = analysis.insights;
+            if (!insights) {
+                document.getElementById(containerId).innerHTML = 
+                    `<p>No ${type.replace('_', ' ')} insights available.</p>`;
+                return;
+            }
+            
+            // Extract sections using markdown headers
+            const sections = [];
+            const sectionRegex = /##\s+(.*?)(?=##|$)/gs;
+            let match;
+            
+            while ((match = sectionRegex.exec(insights)) !== null) {
+                const sectionContent = match[1].trim();
+                const title = sectionContent.split('\n')[0].trim();
+                const content = sectionContent.substring(title.length).trim();
+                
+                sections.push({
+                    title: title.replace('##', '').trim(),
+                    content: content
+                });
+            }
+            
+            let html = sections.map(section => `
+                <div class="insight-section">
+                    <h3 style="color: #0369a1; margin-top: 0; margin-bottom: 10px;">${section.title}</h3>
+                    <div style="margin-left: 15px;">
+                        ${section.content.split('\n')
+                            .filter(line => line.trim())
+                            .map(line => {
+                                // Handle bullet points
+                                if (line.trim().startsWith('- ')) {
+                                    return `• ${line.substring(2).trim()}`;
+                                }
+                                return line;
+                            })
+                            .join('<br>')}
+                    </div>
+                </div>
+            `).join('<hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">');
+            
+            // Add confidence score if available
+            if (analysis.confidence_score !== undefined) {
+                const confidencePercent = (analysis.confidence_score * 100).toFixed(1);
+                html += `
+                    <div style="margin-top: 20px; padding: 10px; background: #f8fafc; border-radius: 4px;">
+                        <strong>Confidence Score:</strong> 
+                        <div class="confidence-bar" style="background: #e2e8f0; height: 10px; border-radius: 5px; margin-top: 5px; overflow: hidden;">
+                            <div style="width: ${confidencePercent}%; height: 100%; background: #4f46e5;"></div>
+                        </div>
+                        <div style="text-align: right; margin-top: 2px; font-size: 12px;">${confidencePercent}%</div>
                     </div>
                 `;
-            }).join('');
-
-            document.getElementById('aiInsights').innerHTML = html;
+            }
+            
+            document.getElementById(containerId).innerHTML = html;
         }
 
         // Main function to load and display the report
@@ -372,8 +508,13 @@
                 renderNumericChart(data.profile.columns);
                 
                 // Render AI insights if available
-                if (data.ai_analysis && data.ai_analysis.insights) {
-                    renderAIInsights(data.ai_analysis.insights);
+                if (data.ai_analysis) {
+                    if (data.ai_analysis.data_quality) {
+                        renderAIInsights(data.ai_analysis.data_quality, 'data_quality');
+                    }
+                    if (data.ai_analysis.anomaly_detection) {
+                        renderAIInsights(data.ai_analysis.anomaly_detection, 'anomaly_detection');
+                    }
                 }
                 
             } catch (error) {

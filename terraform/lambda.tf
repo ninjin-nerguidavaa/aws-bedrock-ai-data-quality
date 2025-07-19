@@ -6,18 +6,22 @@ resource "aws_iam_policy" "lambda_data_quality_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # S3 Access
       {
         Effect = "Allow"
         Action = [
           "s3:PutObject",
           "s3:GetObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:GetBucketLocation",
+          "s3:GetObjectVersion"
         ]
         Resource = [
           "${aws_s3_bucket.data_quality.arn}",
           "${aws_s3_bucket.data_quality.arn}/*"
         ]
       },
+      # Glue Access
       {
         Effect = "Allow"
         Action = [
@@ -25,26 +29,57 @@ resource "aws_iam_policy" "lambda_data_quality_policy" {
           "glue:GetTables",
           "glue:GetDatabase",
           "glue:GetDatabases",
-          "glue:GetPartitions"
+          "glue:GetPartitions",
+          "glue:GetTableVersion",
+          "glue:GetTableVersions"
         ]
         Resource = ["*"]
       },
+      # Athena Access
       {
         Effect = "Allow"
         Action = [
           "athena:StartQueryExecution",
           "athena:GetQueryExecution",
-          "athena:GetQueryResults"
+          "athena:GetQueryResults",
+          "athena:GetQueryExecution",
+          "athena:StopQueryExecution"
         ]
         Resource = ["*"]
       },
+      # SNS Access
       {
         Effect = "Allow"
         Action = [
-          "sns:Publish"
+          "sns:Publish",
+          "sns:Subscribe"
         ]
-        Resource = ["*"]
+        Resource = ["arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
       },
+      # Bedrock Access
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream"
+        ]
+        Resource = [
+          "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/anthropic.claude-v2:1",
+          "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/anthropic.claude-v2"
+        ]
+      },
+      # CloudWatch Logs
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
+        ]
+        Resource = ["arn:aws:logs:*:*:*"]
+      },
+      # X-Ray Access
       {
         Effect = "Allow"
         Action = [
@@ -82,45 +117,85 @@ data "aws_lambda_layer_version" "awssdkpandas" {
   compatible_architectures = ["x86_64"]
 }
 
-resource "aws_lambda_function" "data_quality_checker" {
-  function_name = "${local.project_name}-checker"
+resource "aws_lambda_function" "data_quality" {
+  function_name = "${local.project_name}-data-quality"
   role          = aws_iam_role.lambda_execution_role.arn
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.9"
-  timeout       = 900  # 15 minutes (increased for Bedrock API calls)
-  memory_size   = 1024  # Increased for better performance with Bedrock
+  architectures = ["x86_64"]
+  timeout       = 900  # 15 minutes
+  memory_size   = 2048  # Increased for Bedrock operations
   
-  # Package only the Lambda function code (dependencies are in the layer)
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  # Enable active tracing with X-Ray
+  tracing_config {
+    mode = "Active"
+  }
   
-  # Use the AWS-managed AWSSDKPandas-Python39 layer
-  layers = [data.aws_lambda_layer_version.awssdkpandas.arn]
-  
+  # Set environment variables
   environment {
     variables = {
-      S3_BUCKET             = aws_s3_bucket.data_quality.id
-      SNS_TOPIC_ARN         = aws_sns_topic.data_quality_alerts.arn
-      DEFAULT_DATABASE      = var.default_database
-      BEDROCK_REGION        = var.aws_region
-      LOG_LEVEL             = var.log_level
-      MAX_RETRY_ATTEMPTS    = "3"
-      BEDROCK_MODEL_ID      = "anthropic.claude-3-sonnet-20240229-v1:0"
-      ENABLE_AI_ANALYSIS    = var.enable_ai_analysis ? "true" : "false"
+      ENVIRONMENT          = var.environment
+      LOG_LEVEL            = var.log_level
+      S3_BUCKET           = aws_s3_bucket.data_quality.id
+      GLUE_DATABASE       = aws_glue_catalog_database.this.name
+      GLUE_TABLE          = var.glue_table_name
+      BEDROCK_ENABLED     = "true"
+      BEDROCK_MODEL_ID    = "anthropic.claude-v2:1"
+      MAX_RETRY_ATTEMPTS  = "3"
+      CIRCUIT_BREAKER_TIMEOUT = "300"
+      POWERTOOLS_SERVICE_NAME = "data-quality-bots"
+      POWERTOOLS_METRICS_NAMESPACE = "DataQuality"
     }
   }
   
-  # Add a dead-letter queue for failed invocations
+  # Add Lambda layers for dependencies
+  layers = [
+    "arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension:21",
+    aws_lambda_layer_version.data_quality_deps.arn
+  ]
+  
+  # Enable enhanced monitoring
+  tracing_config {
+    mode = "Active"
+  }
+  
+  # VPC configuration (if needed)
+  dynamic "vpc_config" {
+    for_each = var.vpc_config != null ? [var.vpc_config] : []
+    content {
+      subnet_ids         = vpc_config.value.subnet_ids
+      security_group_ids = vpc_config.value.security_group_ids
+    }
+  }
+  
+  # Dead Letter Queue configuration
   dead_letter_config {
     target_arn = aws_sns_topic.dlq.arn
   }
+  
+  # Enable async event configuration
+  event_source_config {
+    maximum_event_age_in_seconds = 3600  # 1 hour
+    maximum_retry_attempts      = 2
+  }
+  
+  # Enable provisioned concurrency for consistent performance
+  provisioned_concurrent_executions = var.enable_provisioned_concurrency ? 1 : 0
+  
+  # Add tags
+  tags = merge(
+    local.common_tags,
+    {
+      "lambda-insights-extension" = "enabled"
+      "environment"              = var.environment
+      "managed-by"               = "terraform"
+    }
+  )
   
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.lambda_sg.id]
   }
-  
-  tags = local.common_tags
 }
 
 # Create a ZIP archive of the Lambda function code

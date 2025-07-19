@@ -42,12 +42,22 @@ resource "aws_iam_policy" "s3_access" {
         Action = [
           "s3:PutObject",
           "s3:GetObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:GetBucketLocation",
+          "s3:GetObjectVersion"
         ]
         Resource = [
           "arn:aws:s3:::${var.s3_bucket_name}",
           "arn:aws:s3:::${var.s3_bucket_name}/*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListAllMyBuckets"
+        ]
+        Resource = "*"
+      }
       }
     ]
   })
@@ -61,26 +71,10 @@ resource "aws_iam_role_policy_attachment" "s3_access" {
   policy_arn = aws_iam_policy.s3_access.arn
 }
 
-# Bedrock access policy
-resource "aws_iam_policy" "bedrock_access" {
-  name        = "data-quality-bots-bedrock-access"
-  description = "Policy for Bedrock access by Data Quality Bots"
-  
-  policy = file("${path.module}/iam_policy_bedrock.json")
-  
-  tags = var.tags
-}
-
-# Attach Bedrock policy to Lambda role
-resource "aws_iam_role_policy_attachment" "bedrock_access" {
-  role       = aws_iam_role.data_quality_lambda.name
-  policy_arn = aws_iam_policy.bedrock_access.arn
-}
-
-# Glue and Athena access policy
-resource "aws_iam_policy" "data_access" {
-  name        = "data-quality-bots-data-access"
-  description = "Policy for Glue and Athena access by Data Quality Bots"
+# Glue access policy
+resource "aws_iam_policy" "glue_access" {
+  name        = "data-quality-bots-glue-access"
+  description = "Policy for Glue access by Data Quality Bots"
   
   policy = jsonencode({
     Version = "2012-10-17"
