@@ -1,0 +1,69 @@
+What did you build? We built an AI-powered Data Quality Monitoring System that automatically analyzes, validates, and reports on data quality in AWS data lakes. The solution leverages Amazon Bedrock's Claude 2.1 model to provide intelligent insights and anomaly detection.
+Agents in the Project:
+1. Data Quality Analyzer: Automatically profiles data, validates against quality rules, and generates comprehensive reports with confidence scores.
+2. Anomaly Detection Agent: Uses statistical analysis and AI to identify unusual patterns and outliers in the data, providing explanations and severity assessments.
+3. Remediation Advisor: Suggests potential fixes and optimizations for identified data quality issues, along with implementation guidance.
+The system features an interactive dashboard for real-time monitoring and integrates seamlessly with AWS services like S3, Glue, and Lambda for a serverless, scalable architecture.
+
+Did you use AWS Strands Agents to build your project?
+Revert
+
+No, we didn't use AWS Bedrock Agents in this project. Instead, we directly integrated with the Claude 2.1 model through Amazon Bedrock's API. Our implementation uses a custom agent pattern within AWS Lambda functions to handle data quality analysis and anomaly detection, giving us more control over the processing logic and response formatting. The solution was designed to be lightweight and serverless, focusing on direct API integration with Bedrock's foundation models rather than using the Agents
+
+
+How many agents did you build?*
+We built three specialized agents in our project:
+1. Data Quality Analyzer: Handles data profiling and validation
+2. Anomaly Detection Agent: Identifies unusual patterns in the data
+3. Remediation Advisor: Suggests fixes for data quality issues
+Each agent is implemented as a modular component within our AWS Lambda function, working together to provide comprehensive data quality monitoring and insights.
+
+
+What specific Agents are featured in your solution?*
+Please list out all names along with a brief description.
+Here are the three specialized agents in our solution:
+1. Data Quality Analyzer
+    * Performs comprehensive data profiling and validation
+    * Checks for completeness, validity, and uniqueness of data
+    * Generates data quality scores and detailed reports
+2. Anomaly Detection Agent
+    * Identifies statistical outliers and unusual patterns
+    * Uses both rule-based and AI-powered detection
+    * Provides severity assessment and confidence scores for each finding
+3. Remediation Advisor
+    * Suggests specific fixes for identified data quality issues
+    * Provides implementation guidance and best practices
+    * Recommends preventive measures to avoid similar issues
+Each agent is implemented as a modular component within our AWS Lambda function, working together to provide end-to-end data quality monitoring and improvement capabilities.
+
+What problem/opportunity did your team seek to solve, and why is it important?*
+Write 3-5 sentences on the problem you solved.
+We tackled the critical challenge of data quality management in modern data lakes, where poor data quality can lead to flawed analytics and misguided business decisions. Traditional data quality tools often require extensive manual setup and lack the intelligence to understand context or suggest meaningful improvements.
+Our solution automates data quality monitoring using AI, significantly reducing the time and expertise needed to maintain high-quality data. By leveraging Amazon Bedrock's Claude 2.1 model, we've created a system that not only identifies issues but also explains them in business terms and suggests actionable fixes.
+This is particularly important as organizations increasingly rely on data-driven decision making, where the cost of bad data is estimated to cost businesses 15-25% of revenue annually according to Gartner. Our solution makes enterprise-grade data quality accessible to teams of all sizes, ensuring reliable data for critical business operations.
+
+How did you build it?*
+Explain what AI tools and features you used from the AWS Platform or other tools.
+We built the solution using a serverless architecture on AWS with these key components:
+Core AI/ML:
+* Amazon Bedrock with Claude 2.1 for natural language understanding and generation of data quality insights
+* AWS Lambda for serverless execution of our data quality agents and anomaly detection logic
+* AWS Glue for data cataloging and schema validation
+Data Processing:
+* AWS S3 for storing data and quality reports
+* AWS Athena for SQL-based data analysis
+* Pandas for data manipulation and statistical analysis
+Orchestration & Monitoring:
+* AWS Step Functions for workflow orchestration
+* Amazon EventBridge for scheduling and event-driven triggers
+* Amazon CloudWatch for logging and monitoring
+Frontend:
+* AWS S3 for static website hosting
+* JavaScript/Chart.js for interactive visualizations
+* AWS CloudFront for content delivery (optional)
+Key AI Features:
+1. Natural Language Processing: Claude 2.1 analyzes data patterns and generates human-readable insights
+2. Anomaly Detection: Statistical analysis combined with AI to identify unusual data patterns
+3. Smart Recommendations: AI-powered suggestions for data quality improvements
+4. Confidence Scoring: AI-generated confidence levels for each data quality assessment
+The infrastructure is deployed using Terraform for infrastructure-as-code, ensuring repeatable and consistent deployments across environments.
